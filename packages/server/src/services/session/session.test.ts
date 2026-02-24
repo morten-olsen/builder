@@ -1,0 +1,179 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { createApp } from '../../app/app.js';
+import { createTestConfig } from '../../config/config.testing.js';
+import { Services, destroy } from '../../container/container.js';
+import { registerAuthRoutes } from '../../routes/auth/auth.js';
+import { registerIdentityRoutes } from '../../routes/identities/identities.js';
+
+import { SessionNotFoundError } from './session.errors.js';
+import { SessionService } from './session.js';
+
+describe('SessionService', () => {
+  let services: Services;
+  let sessionService: SessionService;
+  let userId: string;
+  let identityId: string;
+
+  beforeEach(async () => {
+    const config = createTestConfig();
+    services = new Services(config);
+
+    // Bootstrap a user + identity so FK constraints pass
+    const app = await createApp({ services, config });
+    registerAuthRoutes(app);
+    registerIdentityRoutes(app);
+    await app.ready();
+
+    const registerRes = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email: 'test@example.com', password: 'password123' },
+    });
+    const authBody = registerRes.json();
+    userId = authBody.user.id;
+
+    const identityRes = await app.inject({
+      method: 'POST',
+      url: `/users/${userId}/identities`,
+      headers: { authorization: `Bearer ${authBody.token}` },
+      payload: {
+        name: 'Test Identity',
+        gitAuthorName: 'Test',
+        gitAuthorEmail: 'test@test.com',
+      },
+    });
+    identityId = identityRes.json().id;
+
+    await app.close();
+
+    sessionService = services.get(SessionService);
+  });
+
+  afterEach(async () => {
+    await services[destroy]();
+  });
+
+  it('creates a session', async () => {
+    const session = await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Fix the bug',
+    });
+
+    expect(session.id).toBeTruthy();
+    expect(session.userId).toBe(userId);
+    expect(session.status).toBe('pending');
+    expect(session.error).toBeNull();
+  });
+
+  it('lists sessions for a user', async () => {
+    await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Task 1',
+    });
+    await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Task 2',
+    });
+
+    const sessions = await sessionService.list(userId);
+    expect(sessions).toHaveLength(2);
+  });
+
+  it('gets a session by userId and sessionId', async () => {
+    const created = await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Task',
+    });
+
+    const session = await sessionService.get({ userId, sessionId: created.id });
+    expect(session.id).toBe(created.id);
+    expect(session.prompt).toBe('Task');
+  });
+
+  it('throws SessionNotFoundError for non-existent session', async () => {
+    await expect(
+      sessionService.get({ userId, sessionId: 'non-existent' }),
+    ).rejects.toThrow(SessionNotFoundError);
+  });
+
+  it('throws SessionNotFoundError for cross-user access', async () => {
+    const session = await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Task',
+    });
+
+    await expect(
+      sessionService.get({ userId: 'other-user', sessionId: session.id }),
+    ).rejects.toThrow(SessionNotFoundError);
+  });
+
+  it('updates session status', async () => {
+    const session = await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Task',
+    });
+
+    await sessionService.updateStatus({ sessionId: session.id, status: 'running' });
+    const updated = await sessionService.get({ userId, sessionId: session.id });
+    expect(updated.status).toBe('running');
+  });
+
+  it('updates session status with error', async () => {
+    const session = await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Task',
+    });
+
+    await sessionService.updateStatus({
+      sessionId: session.id,
+      status: 'failed',
+      error: 'Something went wrong',
+    });
+    const updated = await sessionService.get({ userId, sessionId: session.id });
+    expect(updated.status).toBe('failed');
+    expect(updated.error).toBe('Something went wrong');
+  });
+
+  it('deletes a session', async () => {
+    const session = await sessionService.create({
+      userId,
+      identityId,
+      repoUrl: 'git@github.com:test/repo.git',
+      branch: 'main',
+      prompt: 'Task',
+    });
+
+    await sessionService.delete({ userId, sessionId: session.id });
+    await expect(
+      sessionService.get({ userId, sessionId: session.id }),
+    ).rejects.toThrow(SessionNotFoundError);
+  });
+
+  it('throws SessionNotFoundError when deleting non-existent session', async () => {
+    await expect(
+      sessionService.delete({ userId, sessionId: 'non-existent' }),
+    ).rejects.toThrow(SessionNotFoundError);
+  });
+});

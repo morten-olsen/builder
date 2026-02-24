@@ -1,0 +1,41 @@
+{
+  "values": {
+    "monoRepo": true,
+    "packagePrefix": "@morten-olsen/builder-",
+    "packageVersion": "1.0.0"
+  },
+  "entries": [
+    {
+      "timestamp": "2026-02-24T19:13:49.306Z",
+      "template": "monorepo",
+      "values": {
+        "monoRepo": true,
+        "packagePrefix": "@morten-olsen/builder-",
+        "packageVersion": "1.0.0"
+      }
+    },
+    {
+      "timestamp": "2026-02-24T19:14:02.184Z",
+      "template": "eslint",
+      "values": {
+        "monoRepo": true,
+        "packagePrefix": "@morten-olsen/builder-",
+        "packageVersion": "1.0.0",
+        "target-pkg": {
+          "name": "@morten-olsen/builder-repo",
+          "dir": "/Users/alice/Projects/private/incubator/coding"
+        }
+      }
+    },
+    {
+      "timestamp": "2026-02-24T19:14:39.248Z",
+      "template": "pkg",
+      "values": {
+        "monoRepo": true,
+        "packagePrefix": "@morten-olsen/builder-",
+        "packageVersion": "1.0.0",
+        "packageName": "server"
+      }
+    }
+  ]
+}

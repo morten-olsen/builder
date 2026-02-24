@@ -1,0 +1,8 @@
+*.local.json
+node_modules/
+.turbo/
+.tanstack/
+/.env
+/coverage/
+/packages/*/dist/
+/locals/

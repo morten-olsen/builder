@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "extends": "@morten-olsen/builder-configs/tsconfig.json"
+}

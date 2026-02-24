@@ -1,0 +1,28 @@
+{
+  "type": "module",
+  "main": "dist/exports.js",
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "packageManager": "pnpm@10.6.0",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist/exports.js",
+    "./vitest": "./dist/vitest.js"
+  },
+  "devDependencies": {
+    "@types/node": "25.3.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18",
+    "@morten-olsen/builder-configs": "workspace:*"
+  },
+  "dependencies": {
+    "@pnpm/find-workspace-packages": "6.0.9"
+  },
+  "name": "@morten-olsen/builder-tests",
+  "version": "1.0.0",
+  "private": true
+}

@@ -1,0 +1,50 @@
+{
+  "type": "module",
+  "main": "dist/exports.js",
+  "scripts": {
+    "build": "tsc --build",
+    "start": "node dist/server.js",
+    "dev": "tsc -b --watch --preserveWatchOutput",
+    "test:unit": "vitest --run --passWithNoTests",
+    "test": "pnpm run \"/^test:/\""
+  },
+  "packageManager": "pnpm@10.6.0",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist/exports.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.52",
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
+    "better-sqlite3": "^12.6.2",
+    "convict": "^6.2.4",
+    "dotenv": "^17.3.1",
+    "fastify": "^5.7.4",
+    "fastify-type-provider-zod": "^6.1.0",
+    "jose": "^6.1.3",
+    "kysely": "^0.28.11",
+    "simple-git": "^3.32.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@morten-olsen/builder-configs": "workspace:*",
+    "@morten-olsen/builder-tests": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/convict": "^6.1.6",
+    "@types/node": "25.3.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "tsx": "^4.21.0",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  },
+  "name": "@morten-olsen/builder-server",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/morten-olsen/builder.git",
+    "directory": "packages/server"
+  }
+}
