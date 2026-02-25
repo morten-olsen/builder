@@ -17,6 +17,7 @@ import {
   createSessionBodySchema,
   sendMessageBodySchema,
   revertSessionBodySchema,
+  pinSessionBodySchema,
   messageListResponseSchema,
   sessionResponseSchema,
   sessionListResponseSchema,
@@ -280,6 +281,37 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
       await revertSession(app.services, session.id, request.body.messageId);
 
       reply.send({ error: '' });
+    },
+  });
+
+  typedApp.put('/api/sessions/:sessionId/pin', {
+    onRequest: [app.authenticate],
+    schema: {
+      params: sessionParamsSchema,
+      body: pinSessionBodySchema,
+      response: {
+        200: sessionResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
+        404: errorResponseSchema,
+      },
+      security: [{ bearerAuth: [] }],
+    },
+    handler: async (request, reply) => {
+      const user = requireUser(request.user, reply);
+      const sessionService = app.services.get(SessionService);
+
+      if (request.body.pinned) {
+        await sessionService.pin({ userId: user.sub, sessionId: request.params.sessionId });
+      } else {
+        await sessionService.unpin({ userId: user.sub, sessionId: request.params.sessionId });
+      }
+
+      const session = await sessionService.get({
+        userId: user.sub,
+        sessionId: request.params.sessionId,
+      });
+      reply.send(session);
     },
   });
 

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { ToolCall } from './tool-call.js';
 
 const meta: Meta<typeof ToolCall> = {

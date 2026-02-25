@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { SectionHeader } from './section-header.js';
 
 const meta: Meta<typeof SectionHeader> = {

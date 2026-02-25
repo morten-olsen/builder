@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { ToolResult } from './tool-result.js';
 
 const meta: Meta<typeof ToolResult> = {

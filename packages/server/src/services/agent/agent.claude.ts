@@ -21,7 +21,6 @@ const createClaudeAgentProvider = (apiKey: string, model: string): AgentProvider
       input.abortSignal.addEventListener('abort', () => abortController.abort());
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { CLAUDECODE: _nested, ...parentEnv } = process.env;
     const env = apiKey ? { ...parentEnv, ANTHROPIC_API_KEY: apiKey } : { ...parentEnv };
 

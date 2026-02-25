@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { SessionEventEntry } from '../use-session-events.js';
+
 import { SessionEventItem } from './session-event-item.js';
 import { AssistantMessage } from './assistant-message.js';
 
@@ -25,18 +26,28 @@ const SessionTurn = ({ turn, onRevert, isReverting }: SessionTurnProps): React.R
 
   const { events, finalOutput, completionEvent, snapshotMessageId } = turn;
 
-  // Intermediate events = everything except the final output and the completion event
-  const intermediateEvents = events.filter(
-    (e) => e !== finalOutput && e !== completionEvent,
+  // Split intermediate events: user messages are always visible, the rest are collapsible
+  const userMessages = events.filter(
+    (e) => e !== finalOutput && e !== completionEvent && e.type === 'user:message',
+  );
+  const collapsibleEvents = events.filter(
+    (e) => e !== finalOutput && e !== completionEvent && e.type !== 'user:message',
   );
 
-  const toolCalls = countToolCalls(intermediateEvents);
-  const totalIntermediate = intermediateEvents.length;
+  const toolCalls = countToolCalls(collapsibleEvents);
+  const totalCollapsible = collapsibleEvents.length;
 
   return (
     <div>
-      {/* Collapsible intermediate events */}
-      {totalIntermediate > 0 && (
+      {/* User messages — always visible */}
+      {userMessages.map((event) => (
+        <div key={event.id} className="mb-1">
+          <SessionEventItem event={event} />
+        </div>
+      ))}
+
+      {/* Collapsible intermediate events (tool calls, etc.) */}
+      {totalCollapsible > 0 && (
         <div className="mb-1">
           <button
             onClick={() => setExpanded(!expanded)}
@@ -50,14 +61,14 @@ const SessionTurn = ({ turn, onRevert, isReverting }: SessionTurnProps): React.R
               <path d="M4.5 2l4 4-4 4V2z" />
             </svg>
             <span>
-              {totalIntermediate} event{totalIntermediate !== 1 ? 's' : ''}
+              {totalCollapsible} event{totalCollapsible !== 1 ? 's' : ''}
               {toolCalls > 0 && ` · ${toolCalls} tool call${toolCalls !== 1 ? 's' : ''}`}
             </span>
           </button>
 
           {expanded && (
             <div className="mt-1 space-y-1 border-l border-border-dim pl-3">
-              {intermediateEvents.map((event) => (
+              {collapsibleEvents.map((event) => (
                 <SessionEventItem key={event.id} event={event} />
               ))}
             </div>

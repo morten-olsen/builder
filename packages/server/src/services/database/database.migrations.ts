@@ -295,6 +295,17 @@ const migrations: Record<string, Migration> = {
       // SQLite doesn't support DROP COLUMN in older versions; omit column removal
     },
   },
+  '012_add_pinned_to_sessions': {
+    up: async (db) => {
+      await sql`ALTER TABLE sessions ADD COLUMN pinned_at TEXT`.execute(db);
+    },
+    down: async (db) => {
+      await db.schema
+        .alterTable('sessions')
+        .dropColumn('pinned_at')
+        .execute();
+    },
+  },
 };
 
 const migrationProvider: MigrationProvider = {

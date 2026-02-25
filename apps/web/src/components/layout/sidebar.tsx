@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { Link, useMatches } from '@tanstack/react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '../../auth/auth.js';
+import { getClient } from '../../client/client.js';
 import { useSessionsGrouped } from '../../hooks/use-sessions-grouped.js';
+
 import { SidebarSection } from './sidebar-section.js';
 import { SidebarSessionItem } from './sidebar-session-item.js';
 
@@ -11,12 +15,62 @@ type SidebarProps = {
 
 const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
   const { user, logout } = useAuth();
-  const { groups, isLoading } = useSessionsGrouped();
+  const queryClient = useQueryClient();
+  const [filterRepoId, setFilterRepoId] = useState<string>('');
+  const { groups, isLoading } = useSessionsGrouped({
+    filterRepoId: filterRepoId || undefined,
+  });
   const matches = useMatches();
 
   const activeSessionId = matches
     .map((m) => (m.params as Record<string, string>).sessionId)
     .find(Boolean);
+
+  const repos = useQuery({
+    queryKey: ['repos'],
+    queryFn: async () => {
+      const { data } = await getClient().api.GET('/api/repos');
+      return data ?? [];
+    },
+  });
+
+  const pinMutation = useMutation({
+    mutationFn: async ({ sessionId, pinned }: { sessionId: string; pinned: boolean }) => {
+      await getClient().api.PUT('/api/sessions/{sessionId}/pin', {
+        params: { path: { sessionId } },
+        body: { pinned },
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+  });
+
+  const handleTogglePin = (sessionId: string, pinned: boolean): void => {
+    pinMutation.mutate({ sessionId, pinned });
+  };
+
+  const renderItem = (s: { id: string; status: string; repoUrl: string; branch: string; prompt: string; pinnedAt: string | null }): React.ReactNode => (
+    <SidebarSessionItem
+      key={s.id}
+      id={s.id}
+      status={s.status}
+      repoUrl={s.repoUrl}
+      branch={s.branch}
+      prompt={s.prompt}
+      isActive={s.id === activeSessionId}
+      pinnedAt={s.pinnedAt}
+      onTogglePin={handleTogglePin}
+      onClick={onNavigate}
+    />
+  );
+
+  const isEmpty =
+    groups.pinned.length === 0 &&
+    groups.attention.length === 0 &&
+    groups.running.length === 0 &&
+    groups.pending.length === 0 &&
+    groups.recent.length === 0;
 
   return (
     <div className="flex h-full flex-col bg-surface-1">
@@ -39,6 +93,24 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
         </Link>
       </div>
 
+      {/* Repo filter */}
+      {repos.data && repos.data.length > 1 && (
+        <div className="px-2.5 pt-1.5">
+          <select
+            value={filterRepoId}
+            onChange={(e) => setFilterRepoId(e.target.value)}
+            className="w-full rounded border border-border-base bg-surface-2 px-2 py-1 font-mono text-ui text-text-dim outline-none transition-colors focus:border-accent"
+          >
+            <option value="">All repos</option>
+            {repos.data.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Sessions */}
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto pt-1.5">
         {isLoading ? (
@@ -47,20 +119,15 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
           </div>
         ) : (
           <>
+            {groups.pinned.length > 0 && (
+              <SidebarSection title="Pinned" count={groups.pinned.length}>
+                {groups.pinned.map(renderItem)}
+              </SidebarSection>
+            )}
+
             {groups.attention.length > 0 && (
               <SidebarSection title="Needs Attention" count={groups.attention.length}>
-                {groups.attention.map((s) => (
-                  <SidebarSessionItem
-                    key={s.id}
-                    id={s.id}
-                    status={s.status}
-                    repoUrl={s.repoUrl}
-                    branch={s.branch}
-                    prompt={s.prompt}
-                    isActive={s.id === activeSessionId}
-                    onClick={onNavigate}
-                  />
-                ))}
+                {groups.attention.map(renderItem)}
               </SidebarSection>
             )}
 
@@ -69,46 +136,21 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
                 title="Running"
                 count={groups.running.length + groups.pending.length}
               >
-                {[...groups.running, ...groups.pending].map((s) => (
-                  <SidebarSessionItem
-                    key={s.id}
-                    id={s.id}
-                    status={s.status}
-                    repoUrl={s.repoUrl}
-                    branch={s.branch}
-                    prompt={s.prompt}
-                    isActive={s.id === activeSessionId}
-                    onClick={onNavigate}
-                  />
-                ))}
+                {[...groups.running, ...groups.pending].map(renderItem)}
               </SidebarSection>
             )}
 
             {groups.recent.length > 0 && (
               <SidebarSection title="Recent" count={groups.recent.length} defaultOpen={false}>
-                {groups.recent.map((s) => (
-                  <SidebarSessionItem
-                    key={s.id}
-                    id={s.id}
-                    status={s.status}
-                    repoUrl={s.repoUrl}
-                    branch={s.branch}
-                    prompt={s.prompt}
-                    isActive={s.id === activeSessionId}
-                    onClick={onNavigate}
-                  />
-                ))}
+                {groups.recent.map(renderItem)}
               </SidebarSection>
             )}
 
-            {groups.attention.length === 0 &&
-              groups.running.length === 0 &&
-              groups.pending.length === 0 &&
-              groups.recent.length === 0 && (
-                <div className="px-3 py-4 text-center font-mono text-ui text-text-muted">
-                  no sessions yet
-                </div>
-              )}
+            {isEmpty && (
+              <div className="px-3 py-4 text-center font-mono text-ui text-text-muted">
+                no sessions yet
+              </div>
+            )}
           </>
         )}
       </nav>

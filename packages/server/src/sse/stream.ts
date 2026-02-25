@@ -1,7 +1,8 @@
 import type { FastifyReply } from 'fastify';
 
-import type { EventBusService, SessionEvent, UserEvent } from './event-bus.js';
 import type { SessionEventService } from '../services/session-event/session-event.js';
+
+import type { EventBusService, SessionEvent, UserEvent } from './event-bus.js';
 
 type StreamSessionEventsInput = {
   reply: FastifyReply;
@@ -31,7 +32,7 @@ const streamSessionEvents = async (input: StreamSessionEventsInput): Promise<voi
   });
 
   // 1. Subscribe to live events — buffer them until history replay is done
-  const buffer: Array<{ event: SessionEvent; sequence: number }> = [];
+  const buffer: { event: SessionEvent; sequence: number }[] = [];
   let replayed = false;
 
   const unsubscribe = eventBus.subscribe(sessionId, (event, sequence) => {

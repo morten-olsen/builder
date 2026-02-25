@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useMatches } from '@tanstack/react-router';
+import { createFileRoute, Link, Outlet, useMatches, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -6,6 +6,8 @@ import { getClient } from '../../../client/client.js';
 import { extractRepoName } from '../../../utils/session.js';
 import { StatusDot } from '../../../components/ui/status-dot.js';
 import { Badge } from '../../../components/ui/badge.js';
+import { Button } from '../../../components/ui/button.js';
+import { ConfirmDialog } from '../../../components/ui/confirm-dialog.js';
 
 type StatusBadgeColor = 'accent' | 'success' | 'danger' | 'info' | 'neutral';
 
@@ -14,6 +16,7 @@ const statusToBadgeColor = (status: string): StatusBadgeColor => {
     case 'running':
     case 'pending':
     case 'idle':
+    case 'reverted':
       return 'accent';
     case 'completed':
       return 'success';
@@ -88,6 +91,46 @@ const NotificationToggle = ({ sessionId }: NotificationToggleProps): React.React
   );
 };
 
+type PinToggleProps = {
+  sessionId: string;
+  pinnedAt: string | null;
+};
+
+const PinToggle = ({ sessionId, pinnedAt }: PinToggleProps): React.ReactNode => {
+  const queryClient = useQueryClient();
+  const isPinned = !!pinnedAt;
+
+  const mutation = useMutation({
+    mutationFn: async (pinned: boolean) => {
+      await getClient().api.PUT('/api/sessions/{sessionId}/pin', {
+        params: { path: { sessionId } },
+        body: { pinned },
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['sessions', sessionId] });
+      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+  });
+
+  return (
+    <button
+      onClick={() => mutation.mutate(!isPinned)}
+      title={isPinned ? 'Unpin session' : 'Pin session'}
+      className={`flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-ui transition-colors ${
+        isPinned
+          ? 'text-accent hover:text-accent-bright'
+          : 'text-text-muted/40 hover:text-text-muted'
+      }`}
+    >
+      <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M4.456.734a1.75 1.75 0 0 1 2.826.504l.613 1.327a3.08 3.08 0 0 0 2.084 1.707l2.454.584c1.332.317 1.8 1.972.832 2.94L11.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06L10 11.06l-2.204 2.205c-.968.968-2.623.5-2.94-.832l-.584-2.454a3.08 3.08 0 0 0-1.707-2.084l-1.327-.613a1.75 1.75 0 0 1-.504-2.826L4.456.734Z" />
+      </svg>
+      <span className="text-ui">{isPinned ? 'pinned' : 'pin'}</span>
+    </button>
+  );
+};
+
 const tabs = [
   { to: '/sessions/$sessionId' as const, label: 'build', exact: true },
   { to: '/sessions/$sessionId/review' as const, label: 'review' },
@@ -95,8 +138,22 @@ const tabs = [
 
 const SessionLayout = (): React.ReactNode => {
   const { sessionId } = Route.useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const matches = useMatches();
   const lastMatchId = matches[matches.length - 1]?.id ?? '';
+
+  const deleteSession = useMutation({
+    mutationFn: async () => {
+      await getClient().api.DELETE('/api/sessions/{sessionId}', {
+        params: { path: { sessionId } },
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      void navigate({ to: '/' });
+    },
+  });
 
   const session = useQuery({
     queryKey: ['sessions', sessionId],
@@ -111,9 +168,16 @@ const SessionLayout = (): React.ReactNode => {
 
   const s = session.data;
   const status = s?.status;
+  const isRunning = status === 'running' || status === 'pending';
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
+      {/* Activity indicator bar */}
+      {isRunning && (
+        <div className="absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden bg-accent/20">
+          <div className="h-full w-1/3 animate-[shimmer_1.5s_ease-in-out_infinite] bg-accent" />
+        </div>
+      )}
       <div className="shrink-0 border-b border-border-base bg-surface-1 px-3 py-2 lg:px-5">
         <div className="flex items-center gap-3">
           {s && (
@@ -126,14 +190,29 @@ const SessionLayout = (): React.ReactNode => {
               <span className="font-mono text-xs text-text-dim">{s.branch}</span>
             </>
           )}
-          {status && (
-            <span className="ml-auto flex items-center gap-2">
-              <NotificationToggle sessionId={sessionId} />
-              <Badge variant="status" color={statusToBadgeColor(status)}>
-                {status === 'waiting_for_input' ? 'waiting' : status}
-              </Badge>
-            </span>
-          )}
+          <span className="ml-auto flex items-center gap-2">
+            {s && <PinToggle sessionId={sessionId} pinnedAt={s.pinnedAt} />}
+            {status && (
+              <>
+                <NotificationToggle sessionId={sessionId} />
+                <Badge variant="status" color={statusToBadgeColor(status)}>
+                  {status === 'waiting_for_input' ? 'waiting' : status}
+                </Badge>
+              </>
+            )}
+            <ConfirmDialog
+              trigger={
+                <Button variant="ghost" color="danger" size="sm">
+                  delete
+                </Button>
+              }
+              title="Delete this session?"
+              description="This will permanently remove the session and all its data."
+              confirmLabel="delete"
+              confirmColor="danger"
+              onConfirm={() => deleteSession.mutate()}
+            />
+          </span>
         </div>
         {s?.prompt && (
           <p className="mt-1 truncate font-mono text-xs text-text-dim">{s.prompt}</p>

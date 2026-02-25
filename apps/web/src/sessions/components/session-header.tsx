@@ -2,7 +2,6 @@ import { Link } from '@tanstack/react-router';
 
 import { Badge } from '../../components/ui/badge.js';
 import { Button } from '../../components/ui/button.js';
-import { getStatusColor } from '../../utils/session.js';
 
 type SessionHeaderProps = {
   sessionId: string;

@@ -25,6 +25,7 @@ const sessionResponseSchema = z.object({
   status: z.string(),
   error: z.string().nullable(),
   repoId: z.string().nullable(),
+  pinnedAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -33,6 +34,10 @@ const sessionListResponseSchema = z.array(sessionResponseSchema);
 
 const revertSessionBodySchema = z.object({
   messageId: z.string().min(1),
+});
+
+const pinSessionBodySchema = z.object({
+  pinned: z.boolean(),
 });
 
 const messageResponseSchema = z.object({
@@ -56,6 +61,7 @@ type SendMessageBody = z.infer<typeof sendMessageBodySchema>;
 type SessionResponseData = z.infer<typeof sessionResponseSchema>;
 type SessionListResponseData = z.infer<typeof sessionListResponseSchema>;
 type RevertSessionBody = z.infer<typeof revertSessionBodySchema>;
+type PinSessionBody = z.infer<typeof pinSessionBodySchema>;
 type MessageResponseData = z.infer<typeof messageResponseSchema>;
 type MessageListResponseData = z.infer<typeof messageListResponseSchema>;
 
@@ -66,6 +72,7 @@ export type {
   SessionResponseData,
   SessionListResponseData,
   RevertSessionBody,
+  PinSessionBody,
   MessageResponseData,
   MessageListResponseData,
 };
@@ -74,6 +81,7 @@ export {
   createSessionBodySchema,
   sendMessageBodySchema,
   revertSessionBodySchema,
+  pinSessionBodySchema,
   messageResponseSchema,
   messageListResponseSchema,
   sessionResponseSchema,

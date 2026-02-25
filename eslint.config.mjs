@@ -36,6 +36,14 @@ export default tseslint.config(
   {
     rules: {
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
   {
@@ -61,6 +69,13 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['**/node_modules/', '**/dist/', '**/.turbo/', '**/generated/', '**/*.generated.ts', '**/routeTree.gen.ts'],
+    files: ['**/*.stories.ts', '**/*.stories.tsx', '**/.storybook/**'],
+    rules: {
+      'import-x/no-default-export': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
+  {
+    ignores: ['**/node_modules/', '**/dist/', '**/.turbo/', '**/generated/', '**/*.generated.ts', '**/routeTree.gen.ts', 'locals/'],
   },
 );

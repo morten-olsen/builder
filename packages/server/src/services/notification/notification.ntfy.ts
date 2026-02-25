@@ -12,8 +12,8 @@ const ntfyConfigSchema = z.object({
 
 const levelToPriority: Record<string, string> = {
   info: '3',
-  warning: '4',
-  error: '5',
+  warning: '3',
+  error: '3',
 };
 
 const createNtfyProvider = (): NotificationProvider => ({
