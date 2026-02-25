@@ -11,6 +11,7 @@ type Session = {
   identityId: string;
   repoUrl: string;
   branch: string;
+  sessionBranch: string | null;
   prompt: string;
   status: string;
   error: string | null;
@@ -25,6 +26,7 @@ type CreateSessionInput = {
   identityId: string;
   repoUrl: string;
   branch: string;
+  sessionBranch?: string;
   prompt: string;
   repoId?: string;
 };

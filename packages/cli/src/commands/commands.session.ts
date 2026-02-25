@@ -47,11 +47,12 @@ const registerSessionCommands = (program: Command): void => {
     .description('Create a new session')
     .requiredOption('--repo <id>', 'Repo ID')
     .option('--identity <id>', 'Identity ID (overrides repo default)')
-    .option('--branch <branch>', 'Branch name (overrides repo default)')
+    .option('--branch <branch>', 'Base branch to branch from (overrides repo default)')
+    .option('--session-branch <branch>', 'Custom name for the new session branch')
     .requiredOption('--prompt <prompt>', 'Prompt for the agent')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ repo: string; identity?: string; branch?: string; prompt: string }>();
+      const opts = this.opts<{ repo: string; identity?: string; branch?: string; sessionBranch?: string; prompt: string }>();
       const { services, cleanup } = await createCliContext();
       try {
         const { userId } = await requireAuth(services);
@@ -74,6 +75,7 @@ const registerSessionCommands = (program: Command): void => {
           identityId,
           repoUrl: repo.repoUrl,
           branch,
+          sessionBranch: opts.sessionBranch,
           prompt: opts.prompt,
           repoId: repo.id,
         });
@@ -176,11 +178,12 @@ const registerSessionCommands = (program: Command): void => {
     .description('Create a session and run the agent to completion')
     .requiredOption('--repo <id>', 'Repo ID')
     .option('--identity <id>', 'Identity ID (overrides repo default)')
-    .option('--branch <branch>', 'Branch name (overrides repo default)')
+    .option('--branch <branch>', 'Base branch to branch from (overrides repo default)')
+    .option('--session-branch <branch>', 'Custom name for the new session branch')
     .requiredOption('--prompt <prompt>', 'Prompt for the agent')
     .option('--json', 'Output as newline-delimited JSON events')
     .action(async function (this: Command) {
-      const opts = this.opts<{ repo: string; identity?: string; branch?: string; prompt: string }>();
+      const opts = this.opts<{ repo: string; identity?: string; branch?: string; sessionBranch?: string; prompt: string }>();
       const json = isJson(this);
       const { services, cleanup } = await createCliContext();
       let exitCode = 0;
@@ -209,6 +212,7 @@ const registerSessionCommands = (program: Command): void => {
           identityId,
           repoUrl: repo.repoUrl,
           branch,
+          sessionBranch: opts.sessionBranch,
           prompt: opts.prompt,
           repoId: repo.id,
         });
