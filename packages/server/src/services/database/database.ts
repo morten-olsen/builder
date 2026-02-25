@@ -34,6 +34,7 @@ type SessionsTable = {
   identity_id: string;
   repo_url: string;
   branch: string;
+  session_branch: string | null;
   prompt: string;
   status: string;
   error: string | null;

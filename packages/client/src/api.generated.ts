@@ -930,6 +930,7 @@ export interface paths {
                             identityId: string;
                             repoUrl: string;
                             branch: string;
+                            sessionBranch: string | null;
                             prompt: string;
                             status: string;
                             error: string | null;
@@ -1000,6 +1001,7 @@ export interface paths {
                             identityId: string;
                             repoUrl: string;
                             branch: string;
+                            sessionBranch: string | null;
                             prompt: string;
                             status: string;
                             error: string | null;
@@ -1037,6 +1039,7 @@ export interface paths {
                         repoId: string;
                         identityId?: string;
                         branch?: string;
+                        sessionBranch?: string;
                         prompt: string;
                     };
                 };
@@ -1054,6 +1057,7 @@ export interface paths {
                             identityId: string;
                             repoUrl: string;
                             branch: string;
+                            sessionBranch: string | null;
                             prompt: string;
                             status: string;
                             error: string | null;
@@ -1124,6 +1128,7 @@ export interface paths {
                             identityId: string;
                             repoUrl: string;
                             branch: string;
+                            sessionBranch: string | null;
                             prompt: string;
                             status: string;
                             error: string | null;
@@ -1627,6 +1632,7 @@ export interface paths {
                             identityId: string;
                             repoUrl: string;
                             branch: string;
+                            sessionBranch: string | null;
                             prompt: string;
                             status: string;
                             error: string | null;
