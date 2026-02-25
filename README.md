@@ -2,7 +2,7 @@
 
 **Your coding agent doesn't need you staring at it. Go touch grass.**
 
-You use [Claude Code](https://docs.anthropic.com/en/docs/claude-code). You love it. You also spend an mass amount of time watching a terminal scroll while an AI writes code that you could be reviewing from the couch. Or the park. Or literally anywhere that isn't your desk chair slowly fusing with your spine.
+You use [Claude Code](https://docs.anthropic.com/en/docs/claude-code). You love it. You also spend a mass amount of time watching a terminal scroll while an AI writes code that you could be reviewing from the couch. Or the park. Or literally anywhere that isn't your desk chair slowly fusing with your spine.
 
 Builder is a self-hosted server that wraps Claude Code in a web UI with proper session management. Kick off a handful of tasks across different repos — or different branches of the same repo — and leave. Go for a walk. Make dinner. Touch grass. Each session gets its own Git worktree, so nothing steps on anything else while you're gone.
 
@@ -12,6 +12,10 @@ Notifications are coming soon (ntfy.sh, Pushover, webhooks) to make this loop ev
 
 Built on the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript).
 
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" width="700" alt="Dashboard — sessions grouped by status across multiple repos" />
+</p>
+
 ---
 
 ## How It Works
@@ -20,7 +24,19 @@ Built on the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-t
 
 **Manage everything from your phone.** The web UI is built mobile-first. Check session status, answer questions the agent is stuck on, send follow-ups, review diffs, and push branches — all from your phone. Your desk misses you. That's its problem.
 
-**Or sit down for the big stuff.** Some changes deserve a proper look. The review screen works just as well on a big monitor with a cup of coffee. Go through the diff carefully, leave comments, push when you're satisfied. Builder doesn't rush you.
+<p align="center">
+  <img src="docs/screenshots/dashboard-mobile.png" width="280" alt="Mobile dashboard" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/session-mobile.png" width="280" alt="Mobile session view — agent output and message input" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/review-mobile.png" width="280" alt="Mobile review — diff viewer with file list" />
+</p>
+
+**Or sit down for the big stuff.** Some changes deserve a proper look. The review screen works just as well on a big monitor with a cup of coffee. Go through the diff carefully, mark files as reviewed, push when you're satisfied. Builder doesn't rush you.
+
+<p align="center">
+  <img src="docs/screenshots/review.png" width="700" alt="Review screen — file list with diff viewer and review progress" />
+</p>
 
 **Everything over Git.** Builder generates Ed25519 SSH keypairs for each identity you create. Add the public key to GitHub or GitLab and you're connected. The agent commits to branches in isolated worktrees — you decide when and what to push.
 
