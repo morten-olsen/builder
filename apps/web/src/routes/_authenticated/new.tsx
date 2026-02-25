@@ -15,6 +15,7 @@ const NewSessionPage = (): React.ReactNode => {
   const [repoId, setRepoId] = useState('');
   const [prompt, setPrompt] = useState('');
   const [branch, setBranch] = useState('');
+  const [sessionBranch, setSessionBranch] = useState('');
 
   const repos = useQuery({
     queryKey: ['repos'],
@@ -33,6 +34,7 @@ const NewSessionPage = (): React.ReactNode => {
           repoId,
           prompt,
           ...(branch ? { branch } : {}),
+          ...(sessionBranch ? { sessionBranch } : {}),
         },
       });
       if (error || !data) throw new Error(error?.error ?? 'Failed to create session');
@@ -111,12 +113,27 @@ const NewSessionPage = (): React.ReactNode => {
         </div>
 
         <div className="mb-3">
-          <Label>Branch (optional)</Label>
+          <Label>Base Branch (optional)</Label>
           <Input
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
             placeholder={selectedRepo?.defaultBranch ?? 'main'}
           />
+          <div className="mt-1 font-mono text-xs text-text-muted">
+            Branch to start from (defaults to repo default)
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <Label>Session Branch Name (optional)</Label>
+          <Input
+            value={sessionBranch}
+            onChange={(e) => setSessionBranch(e.target.value)}
+            placeholder="e.g., feature/my-feature"
+          />
+          <div className="mt-1 font-mono text-xs text-text-muted">
+            Custom name for the new branch (auto-generated if not specified)
+          </div>
         </div>
 
         {createSession.error && (

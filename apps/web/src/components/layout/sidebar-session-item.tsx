@@ -8,6 +8,7 @@ type SidebarSessionItemProps = {
   status: string;
   repoUrl: string;
   branch: string;
+  sessionBranch?: string | null;
   prompt: string;
   isActive: boolean;
   pinnedAt?: string | null;
@@ -20,6 +21,7 @@ const SidebarSessionItem = ({
   status,
   repoUrl,
   branch,
+  sessionBranch,
   prompt,
   isActive,
   pinnedAt,
@@ -28,6 +30,7 @@ const SidebarSessionItem = ({
 }: SidebarSessionItemProps): React.ReactNode => {
   const repoName = extractRepoName(repoUrl);
   const isPinned = !!pinnedAt;
+  const displayBranch = sessionBranch || branch;
 
   return (
     <div
@@ -49,7 +52,7 @@ const SidebarSessionItem = ({
         <div className="min-w-0 flex-1">
           <p className="truncate font-mono text-xs text-text-base">{prompt}</p>
           <p className="mt-0.5 truncate font-mono text-ui text-text-muted">
-            {repoName} / {branch}
+            {repoName} / {displayBranch}
           </p>
         </div>
       </Link>

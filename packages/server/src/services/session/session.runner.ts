@@ -172,15 +172,11 @@ const startSession = async (services: Services, sessionId: string): Promise<void
 
     await gitService.fetch({ bareRepoPath, sshPrivateKey });
 
-    // Determine if session.branch is likely a custom branch name or a base branch
-    const commonBaseBranches = ['main', 'master', 'develop', 'dev', 'staging'];
-    const isCustomBranchName = !commonBaseBranches.includes(session.branch);
-
     const cwd = await gitService.createWorktree({
       bareRepoPath,
       sessionId,
-      ref: isCustomBranchName ? 'main' : session.branch,  // Branch FROM main if custom, otherwise use session.branch
-      branchName: isCustomBranchName ? session.branch : undefined,  // Use custom name if provided
+      ref: session.branch,  // Base branch to branch from
+      branchName: session.sessionBranch ?? undefined,  // Custom session branch name
     });
 
     await sessionService.updateStatus({ sessionId, status: 'running' });

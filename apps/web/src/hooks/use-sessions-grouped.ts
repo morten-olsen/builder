@@ -6,6 +6,7 @@ type Session = {
   id: string;
   repoUrl: string;
   branch: string;
+  sessionBranch: string | null;
   prompt: string;
   status: string;
   repoId: string | null;

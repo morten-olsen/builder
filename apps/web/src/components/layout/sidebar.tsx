@@ -50,13 +50,14 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
     pinMutation.mutate({ sessionId, pinned });
   };
 
-  const renderItem = (s: { id: string; status: string; repoUrl: string; branch: string; prompt: string; pinnedAt: string | null }): React.ReactNode => (
+  const renderItem = (s: { id: string; status: string; repoUrl: string; branch: string; sessionBranch: string | null; prompt: string; pinnedAt: string | null }): React.ReactNode => (
     <SidebarSessionItem
       key={s.id}
       id={s.id}
       status={s.status}
       repoUrl={s.repoUrl}
       branch={s.branch}
+      sessionBranch={s.sessionBranch}
       prompt={s.prompt}
       isActive={s.id === activeSessionId}
       pinnedAt={s.pinnedAt}

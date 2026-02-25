@@ -8,6 +8,7 @@ const createSessionBodySchema = z.object({
   repoId: z.string().min(1),
   identityId: z.string().min(1).optional(),
   branch: z.string().min(1).optional(),
+  sessionBranch: z.string().min(1).optional(),
   prompt: z.string().min(1),
 });
 
@@ -21,6 +22,7 @@ const sessionResponseSchema = z.object({
   identityId: z.string(),
   repoUrl: z.string(),
   branch: z.string(),
+  sessionBranch: z.string().nullable(),
   prompt: z.string(),
   status: z.string(),
   error: z.string().nullable(),

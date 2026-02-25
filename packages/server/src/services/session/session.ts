@@ -43,6 +43,7 @@ const mapRow = (row: {
   identity_id: string;
   repo_url: string;
   branch: string;
+  session_branch: string | null;
   prompt: string;
   status: string;
   error: string | null;
@@ -56,6 +57,7 @@ const mapRow = (row: {
   identityId: row.identity_id,
   repoUrl: row.repo_url,
   branch: row.branch,
+  sessionBranch: row.session_branch,
   prompt: row.prompt,
   status: row.status,
   error: row.error,
@@ -89,6 +91,7 @@ class SessionService {
         identity_id: input.identityId,
         repo_url: input.repoUrl,
         branch: input.branch,
+        session_branch: input.sessionBranch ?? null,
         prompt: input.prompt,
         status: 'pending',
         error: null,
@@ -104,6 +107,7 @@ class SessionService {
       identityId: input.identityId,
       repoUrl: input.repoUrl,
       branch: input.branch,
+      sessionBranch: input.sessionBranch ?? null,
       prompt: input.prompt,
       status: 'pending',
       error: null,
