@@ -50,6 +50,7 @@ type CreateWorktreeInput = {
   bareRepoPath: string;
   sessionId: string;
   ref: string;
+  branchName?: string;
 };
 
 type RemoveWorktreeInput = {
@@ -244,7 +245,7 @@ class GitService {
 
   createWorktree = async (input: CreateWorktreeInput): Promise<string> => {
     const worktreePath = path.join(this.#dataDir, 'worktrees', input.sessionId);
-    const branchName = `session/${input.sessionId}`;
+    const branchName = input.branchName ?? `session/${input.sessionId}`;
 
     try {
       await mkdir(path.dirname(worktreePath), { recursive: true });
