@@ -6,15 +6,17 @@ import { AuthService } from '../../services/auth/auth.js';
 import {
   registerBodySchema,
   loginBodySchema,
+  changePasswordBodySchema,
   authResponseSchema,
   meResponseSchema,
+  successResponseSchema,
   errorResponseSchema,
 } from './auth.schemas.js';
 
 const registerAuthRoutes = (app: FastifyInstance): void => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-  typedApp.post('/auth/register', {
+  typedApp.post('/api/auth/register', {
     schema: {
       body: registerBodySchema,
       response: {
@@ -28,7 +30,7 @@ const registerAuthRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/auth/login', {
+  typedApp.post('/api/auth/login', {
     schema: {
       body: loginBodySchema,
       response: {
@@ -42,7 +44,7 @@ const registerAuthRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/auth/me', {
+  typedApp.get('/api/auth/me', {
     onRequest: [app.authenticate],
     schema: {
       response: {
@@ -58,6 +60,30 @@ const registerAuthRoutes = (app: FastifyInstance): void => {
       }
       const me = await app.services.get(AuthService).getMe(request.user.sub);
       reply.send(me);
+    },
+  });
+
+  typedApp.put('/api/auth/password', {
+    onRequest: [app.authenticate],
+    schema: {
+      body: changePasswordBodySchema,
+      response: {
+        200: successResponseSchema,
+        401: errorResponseSchema,
+      },
+      security: [{ bearerAuth: [] }],
+    },
+    handler: async (request, reply) => {
+      if (!request.user) {
+        reply.code(401).send({ error: 'Unauthorized' });
+        return;
+      }
+      await app.services.get(AuthService).changePassword({
+        userId: request.user.sub,
+        currentPassword: request.body.currentPassword,
+        newPassword: request.body.newPassword,
+      });
+      reply.send({ success: true as const });
     },
   });
 };

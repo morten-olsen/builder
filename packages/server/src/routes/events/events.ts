@@ -13,7 +13,7 @@ const requireUser = (user: AuthTokenPayload | null, reply: FastifyReply): AuthTo
 };
 
 const registerEventRoutes = (app: FastifyInstance): void => {
-  app.get('/events', {
+  app.get('/api/events', {
     onRequest: [app.authenticate],
     schema: {
       security: [{ bearerAuth: [] }],

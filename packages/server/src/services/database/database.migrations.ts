@@ -262,6 +262,39 @@ const migrations: Record<string, Migration> = {
         .execute();
     },
   },
+  '011_create_notification_channels': {
+    up: async (db) => {
+      await db.schema
+        .createTable('notification_channels')
+        .addColumn('id', 'text', (col) => col.primaryKey())
+        .addColumn('user_id', 'text', (col) =>
+          col.notNull().references('users.id').onDelete('cascade'),
+        )
+        .addColumn('name', 'text', (col) => col.notNull())
+        .addColumn('provider', 'text', (col) => col.notNull())
+        .addColumn('encrypted_config', 'text', (col) => col.notNull())
+        .addColumn('enabled', 'integer', (col) => col.notNull().defaultTo(1))
+        .addColumn('created_at', 'text', (col) => col.notNull().defaultTo(sql`(datetime('now'))`))
+        .addColumn('updated_at', 'text', (col) => col.notNull().defaultTo(sql`(datetime('now'))`))
+        .execute();
+
+      await db.schema
+        .createIndex('idx_notification_channels_user_id')
+        .on('notification_channels')
+        .column('user_id')
+        .execute();
+
+      await sql`ALTER TABLE users ADD COLUMN notifications_enabled INTEGER NOT NULL DEFAULT 1`.execute(db);
+      await sql`ALTER TABLE users ADD COLUMN notification_events TEXT NOT NULL DEFAULT '["session:completed","session:error","session:waiting_for_input"]'`.execute(db);
+
+      await sql`ALTER TABLE sessions ADD COLUMN notifications_enabled INTEGER`.execute(db);
+    },
+    down: async (db) => {
+      await db.schema.dropIndex('idx_notification_channels_user_id').execute();
+      await db.schema.dropTable('notification_channels').execute();
+      // SQLite doesn't support DROP COLUMN in older versions; omit column removal
+    },
+  },
 };
 
 const migrationProvider: MigrationProvider = {

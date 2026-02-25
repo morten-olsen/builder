@@ -24,7 +24,7 @@ const ReposPage = (): React.ReactNode => {
   const repos = useQuery({
     queryKey: ['repos'],
     queryFn: async () => {
-      const { data } = await getClient().api.GET('/repos');
+      const { data } = await getClient().api.GET('/api/repos');
       return data ?? [];
     },
   });
@@ -33,7 +33,7 @@ const ReposPage = (): React.ReactNode => {
     queryKey: ['identities'],
     queryFn: async () => {
       if (!user) return [];
-      const { data } = await getClient().api.GET('/users/{userId}/identities', {
+      const { data } = await getClient().api.GET('/api/users/{userId}/identities', {
         params: { path: { userId: user.id } },
       });
       return data ?? [];
@@ -43,7 +43,7 @@ const ReposPage = (): React.ReactNode => {
 
   const createRepo = useMutation({
     mutationFn: async () => {
-      const { data, error } = await getClient().api.POST('/repos', {
+      const { data, error } = await getClient().api.POST('/api/repos', {
         body: {
           name,
           repoUrl,

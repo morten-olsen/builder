@@ -81,7 +81,7 @@ describe('startSession', () => {
 
     const registerRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/auth/register',
       payload: { email: 'test@example.com', password: 'password123' },
     });
     const authBody = registerRes.json();
@@ -89,7 +89,7 @@ describe('startSession', () => {
 
     const identityRes = await app.inject({
       method: 'POST',
-      url: `/users/${userId}/identities`,
+      url: `/api/users/${userId}/identities`,
       headers: { authorization: `Bearer ${authBody.token}` },
       payload: {
         name: 'Test Identity',

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useMatches } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import { getClient } from '../../../client/client.js';
 import { extractRepoName } from '../../../utils/session.js';
@@ -25,6 +26,68 @@ const statusToBadgeColor = (status: string): StatusBadgeColor => {
   }
 };
 
+type NotificationState = 'inherit' | 'on' | 'off';
+
+const notificationCycle: Record<NotificationState, NotificationState> = {
+  inherit: 'on',
+  on: 'off',
+  off: 'inherit',
+};
+
+const notificationLabel: Record<NotificationState, string> = {
+  inherit: 'default',
+  on: 'on',
+  off: 'off',
+};
+
+type NotificationToggleProps = {
+  sessionId: string;
+};
+
+const NotificationToggle = ({ sessionId }: NotificationToggleProps): React.ReactNode => {
+  const queryClient = useQueryClient();
+  const [state, setState] = useState<NotificationState>('inherit');
+
+  const mutation = useMutation({
+    mutationFn: async (next: NotificationState) => {
+      const enabled = next === 'inherit' ? null : next === 'on';
+      await getClient().api.PUT('/api/sessions/{sessionId}/notifications', {
+        params: { path: { sessionId } },
+        body: { enabled },
+      });
+      return next;
+    },
+    onSuccess: (next) => {
+      setState(next);
+      void queryClient.invalidateQueries({ queryKey: ['sessions', sessionId] });
+    },
+  });
+
+  const handleClick = (): void => {
+    const next = notificationCycle[state];
+    mutation.mutate(next);
+  };
+
+  const isActive = state !== 'off';
+
+  return (
+    <button
+      onClick={handleClick}
+      title={`Notifications: ${notificationLabel[state]}`}
+      className={`flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-ui transition-colors ${
+        isActive
+          ? 'text-text-dim hover:text-text-bright'
+          : 'text-text-muted/40 hover:text-text-muted'
+      }`}
+    >
+      <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 1.5A3.5 3.5 0 0 0 4.5 5v2.947c0 .346-.102.683-.294.97l-1.703 2.556-.003.004A1 1 0 0 0 3.33 13h9.34a1 1 0 0 0 .83-1.523l-.003-.004-1.703-2.556a1.75 1.75 0 0 1-.294-.97V5A3.5 3.5 0 0 0 8 1.5ZM6 14.5a2 2 0 0 0 4 0H6Z" />
+      </svg>
+      <span className="text-ui">{notificationLabel[state]}</span>
+    </button>
+  );
+};
+
 const tabs = [
   { to: '/sessions/$sessionId' as const, label: 'build', exact: true },
   { to: '/sessions/$sessionId/review' as const, label: 'review' },
@@ -38,7 +101,7 @@ const SessionLayout = (): React.ReactNode => {
   const session = useQuery({
     queryKey: ['sessions', sessionId],
     queryFn: async () => {
-      const { data, error } = await getClient().api.GET('/sessions/{sessionId}', {
+      const { data, error } = await getClient().api.GET('/api/sessions/{sessionId}', {
         params: { path: { sessionId } },
       });
       if (error || !data) throw new Error(error?.error ?? 'Not found');
@@ -64,7 +127,8 @@ const SessionLayout = (): React.ReactNode => {
             </>
           )}
           {status && (
-            <span className="ml-auto">
+            <span className="ml-auto flex items-center gap-2">
+              <NotificationToggle sessionId={sessionId} />
               <Badge variant="status" color={statusToBadgeColor(status)}>
                 {status === 'waiting_for_input' ? 'waiting' : status}
               </Badge>

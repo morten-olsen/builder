@@ -3,7 +3,6 @@
   "main": "dist/exports.js",
   "scripts": {
     "build": "tsc --build",
-    "start": "node dist/server.js",
     "dev": "tsc -b --watch --preserveWatchOutput",
     "test:unit": "vitest --run --passWithNoTests",
     "test": "pnpm run \"/^test:/\""

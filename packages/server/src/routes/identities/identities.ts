@@ -33,7 +33,7 @@ const assertOwnership = (tokenSub: string, paramsUserId: string): void => {
 const registerIdentityRoutes = (app: FastifyInstance): void => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-  typedApp.get('/users/:userId/identities', {
+  typedApp.get('/api/users/:userId/identities', {
     onRequest: [app.authenticate],
     schema: {
       params: userParamsSchema,
@@ -52,7 +52,7 @@ const registerIdentityRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/users/:userId/identities', {
+  typedApp.post('/api/users/:userId/identities', {
     onRequest: [app.authenticate],
     schema: {
       params: userParamsSchema,
@@ -76,7 +76,7 @@ const registerIdentityRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/users/:userId/identities/:identityId', {
+  typedApp.get('/api/users/:userId/identities/:identityId', {
     onRequest: [app.authenticate],
     schema: {
       params: identityParamsSchema,
@@ -98,7 +98,7 @@ const registerIdentityRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.put('/users/:userId/identities/:identityId', {
+  typedApp.put('/api/users/:userId/identities/:identityId', {
     onRequest: [app.authenticate],
     schema: {
       params: identityParamsSchema,
@@ -123,7 +123,7 @@ const registerIdentityRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.delete('/users/:userId/identities/:identityId', {
+  typedApp.delete('/api/users/:userId/identities/:identityId', {
     onRequest: [app.authenticate],
     schema: {
       params: identityParamsSchema,

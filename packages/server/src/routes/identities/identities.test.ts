@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createApp } from '../../app/app.js';
 import { createTestConfig } from '../../config/config.testing.js';
 import { Services, destroy } from '../../container/container.js';
+import { generateSshKeyPair } from '../../services/identity/identity.utils.js';
 import { registerAuthRoutes } from '../auth/auth.js';
 
 import { registerIdentityRoutes } from './identities.js';
@@ -23,7 +24,7 @@ describe('identity routes', () => {
 
     const registerRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/auth/register',
       payload: { email: 'test@example.com', password: 'password123' },
     });
     const body = registerRes.json();
@@ -41,7 +42,7 @@ describe('identity routes', () => {
   const createIdentity = async (name = 'Test Identity'): Promise<Record<string, unknown>> => {
     const res = await app.inject({
       method: 'POST',
-      url: `/users/${userId}/identities`,
+      url: `/api/users/${userId}/identities`,
       headers: authHeader(),
       payload: {
         name,
@@ -56,7 +57,7 @@ describe('identity routes', () => {
     it('creates an identity with generated keys', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: `/users/${userId}/identities`,
+        url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
           name: 'Work',
@@ -75,7 +76,7 @@ describe('identity routes', () => {
     it('creates an identity with imported keys', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: `/users/${userId}/identities`,
+        url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
           name: 'Imported',
@@ -90,10 +91,47 @@ describe('identity routes', () => {
       expect(response.json().publicKey).toBe('ssh-ed25519 AAAA...');
     });
 
+    it('creates an identity with only privateKey and derives publicKey', async () => {
+      const keyPair = generateSshKeyPair();
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/api/users/${userId}/identities`,
+        headers: authHeader(),
+        payload: {
+          name: 'Derived',
+          gitAuthorName: 'Carol',
+          gitAuthorEmail: 'carol@test.com',
+          privateKey: keyPair.privateKey,
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      const body = response.json();
+      expect(body.publicKey).toMatch(/^ssh-ed25519 /);
+    });
+
+    it('returns 400 when privateKey is invalid', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/api/users/${userId}/identities`,
+        headers: authHeader(),
+        payload: {
+          name: 'Bad Key',
+          gitAuthorName: 'Alice',
+          gitAuthorEmail: 'alice@test.com',
+          privateKey: 'not-a-valid-private-key',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error).toBe('Invalid private key format');
+    });
+
     it('returns 400 when only publicKey is provided without privateKey', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: `/users/${userId}/identities`,
+        url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
           name: 'Bad',
@@ -109,7 +147,7 @@ describe('identity routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: `/users/${userId}/identities`,
+        url: `/api/users/${userId}/identities`,
         payload: {
           name: 'No Auth',
           gitAuthorName: 'Alice',
@@ -123,7 +161,7 @@ describe('identity routes', () => {
     it('returns 403 for different user', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/users/other-user-id/identities',
+        url: '/api/users/other-user-id/identities',
         headers: authHeader(),
         payload: {
           name: 'Forbidden',
@@ -143,7 +181,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/users/${userId}/identities`,
+        url: `/api/users/${userId}/identities`,
         headers: authHeader(),
       });
 
@@ -155,7 +193,7 @@ describe('identity routes', () => {
     it('returns empty array when no identities exist', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/users/${userId}/identities`,
+        url: `/api/users/${userId}/identities`,
         headers: authHeader(),
       });
 
@@ -166,7 +204,7 @@ describe('identity routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/users/${userId}/identities`,
+        url: `/api/users/${userId}/identities`,
       });
 
       expect(response.statusCode).toBe(401);
@@ -175,7 +213,7 @@ describe('identity routes', () => {
     it('returns 403 for different user', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/users/other-user-id/identities',
+        url: '/api/users/other-user-id/identities',
         headers: authHeader(),
       });
 
@@ -189,7 +227,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/users/${userId}/identities/${created.id}`,
+        url: `/api/users/${userId}/identities/${created.id}`,
         headers: authHeader(),
       });
 
@@ -200,7 +238,7 @@ describe('identity routes', () => {
     it('returns 404 for non-existent identity', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/users/${userId}/identities/non-existent`,
+        url: `/api/users/${userId}/identities/non-existent`,
         headers: authHeader(),
       });
 
@@ -210,7 +248,7 @@ describe('identity routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/users/${userId}/identities/some-id`,
+        url: `/api/users/${userId}/identities/some-id`,
       });
 
       expect(response.statusCode).toBe(401);
@@ -221,7 +259,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/users/other-user-id/identities/${created.id}`,
+        url: `/api/users/other-user-id/identities/${created.id}`,
         headers: authHeader(),
       });
 
@@ -235,7 +273,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'PUT',
-        url: `/users/${userId}/identities/${created.id}`,
+        url: `/api/users/${userId}/identities/${created.id}`,
         headers: authHeader(),
         payload: {
           name: 'Updated Name',
@@ -256,7 +294,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'PUT',
-        url: `/users/${userId}/identities/${created.id}`,
+        url: `/api/users/${userId}/identities/${created.id}`,
         headers: authHeader(),
         payload: { name: 'Just Name' },
       });
@@ -270,7 +308,7 @@ describe('identity routes', () => {
     it('returns 404 for non-existent identity', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/users/${userId}/identities/non-existent`,
+        url: `/api/users/${userId}/identities/non-existent`,
         headers: authHeader(),
         payload: { name: 'Nope' },
       });
@@ -281,7 +319,7 @@ describe('identity routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/users/${userId}/identities/some-id`,
+        url: `/api/users/${userId}/identities/some-id`,
         payload: { name: 'X' },
       });
 
@@ -293,7 +331,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'PUT',
-        url: `/users/other-user-id/identities/${created.id}`,
+        url: `/api/users/other-user-id/identities/${created.id}`,
         headers: authHeader(),
         payload: { name: 'Forbidden' },
       });
@@ -308,7 +346,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'DELETE',
-        url: `/users/${userId}/identities/${created.id}`,
+        url: `/api/users/${userId}/identities/${created.id}`,
         headers: authHeader(),
       });
 
@@ -316,7 +354,7 @@ describe('identity routes', () => {
 
       const getRes = await app.inject({
         method: 'GET',
-        url: `/users/${userId}/identities/${created.id}`,
+        url: `/api/users/${userId}/identities/${created.id}`,
         headers: authHeader(),
       });
       expect(getRes.statusCode).toBe(404);
@@ -325,7 +363,7 @@ describe('identity routes', () => {
     it('returns 404 for non-existent identity', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/users/${userId}/identities/non-existent`,
+        url: `/api/users/${userId}/identities/non-existent`,
         headers: authHeader(),
       });
 
@@ -335,7 +373,7 @@ describe('identity routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/users/${userId}/identities/some-id`,
+        url: `/api/users/${userId}/identities/some-id`,
       });
 
       expect(response.statusCode).toBe(401);
@@ -346,7 +384,7 @@ describe('identity routes', () => {
 
       const response = await app.inject({
         method: 'DELETE',
-        url: `/users/other-user-id/identities/${created.id}`,
+        url: `/api/users/other-user-id/identities/${created.id}`,
         headers: authHeader(),
       });
 

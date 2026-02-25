@@ -2,12 +2,15 @@ import { EventEmitter } from 'node:events';
 
 import { destroy } from '../container/container.js';
 import type { Services } from '../container/container.js';
+import { DatabaseService } from '../services/database/database.js';
+import { NotificationService } from '../services/notification/notification.js';
 import { SessionEventService } from '../services/session-event/session-event.js';
 
 type SessionEvent =
   | { type: 'agent:output'; data: { text: string; messageType: string } }
   | { type: 'agent:tool_use'; data: { tool: string; input: unknown } }
   | { type: 'agent:tool_result'; data: { tool: string; output: unknown } }
+  | { type: 'user:message'; data: { message: string } }
   | { type: 'session:status'; data: { status: string } }
   | { type: 'session:waiting_for_input'; data: { prompt: string } }
   | { type: 'session:completed'; data: { summary: string } }
@@ -72,6 +75,15 @@ class EventBusService {
           } satisfies UserEvent);
         }
       }
+
+      // Dispatch push notifications for significant events
+      const notificationEvent = this.#mapToNotification(event, sessionId);
+      if (notificationEvent) {
+        const userId = this.#sessionUsers.get(sessionId);
+        if (userId) {
+          this.#dispatchNotification(userId, sessionId, notificationEvent).catch(() => undefined);
+        }
+      }
     };
     doEmit().catch(() => undefined);
   };
@@ -90,6 +102,49 @@ class EventBusService {
     return () => {
       emitter.off('event', listener);
     };
+  };
+
+  #mapToNotification = (event: SessionEvent, sessionId: string): { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' } | null => {
+    switch (event.type) {
+      case 'session:completed':
+        return { type: 'session:completed', title: 'Session completed', body: event.data.summary, level: 'info' };
+      case 'session:error':
+        return { type: 'session:error', title: 'Session failed', body: event.data.error, level: 'error' };
+      case 'session:waiting_for_input':
+        return { type: 'session:waiting_for_input', title: 'Input needed', body: event.data.prompt, level: 'warning' };
+      default:
+        return null;
+    }
+  };
+
+  #dispatchNotification = async (userId: string, sessionId: string, event: { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' }): Promise<void> => {
+    const notificationService = this.#services.get(NotificationService);
+    const prefs = await notificationService.getPreferences(userId);
+
+    // Check global event-type filter
+    if (!prefs.notificationEvents.includes(event.type)) return;
+
+    // Check session-level override, then global toggle
+    const db = await this.#services.get(DatabaseService).getInstance();
+    const session = await db
+      .selectFrom('sessions')
+      .select('notifications_enabled')
+      .where('id', '=', sessionId)
+      .executeTakeFirst();
+
+    const sessionOverride = session?.notifications_enabled;
+    const enabled = sessionOverride !== null && sessionOverride !== undefined
+      ? sessionOverride === 1
+      : prefs.notificationsEnabled;
+
+    if (!enabled) return;
+
+    await notificationService.dispatch(userId, {
+      title: event.title,
+      body: event.body,
+      level: event.level,
+      sessionId,
+    });
   };
 
   remove = (sessionId: string): void => {

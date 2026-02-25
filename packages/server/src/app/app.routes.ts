@@ -6,6 +6,7 @@ import { registerIdentityRoutes } from '../routes/identities/identities.js';
 import { registerRepoRoutes } from '../routes/repos/repos.js';
 import { registerSessionRoutes } from '../routes/sessions/sessions.js';
 import { registerReviewRoutes } from '../routes/sessions/sessions.review.js';
+import { registerNotificationRoutes } from '../routes/notifications/notifications.js';
 
 const registerAllRoutes = (app: FastifyInstance): void => {
   registerAuthRoutes(app);
@@ -14,6 +15,7 @@ const registerAllRoutes = (app: FastifyInstance): void => {
   registerRepoRoutes(app);
   registerSessionRoutes(app);
   registerReviewRoutes(app);
+  registerNotificationRoutes(app);
 };
 
 export { registerAllRoutes };

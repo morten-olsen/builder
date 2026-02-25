@@ -1,32 +1,14 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { execSync } from 'node:child_process';
 import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 
-const encryptPrivateKey = (plaintext: string, keyHex: string): string => {
-  const key = Buffer.from(keyHex, 'hex');
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', key, iv);
+import { encrypt, decrypt } from '../../utils/crypto.js';
+import { IdentityError } from './identity.errors.js';
 
-  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-
-  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
-};
-
-const decryptPrivateKey = (stored: string, keyHex: string): string => {
-  const [ivHex, authTagHex, ciphertextHex] = stored.split(':');
-  const key = Buffer.from(keyHex, 'hex');
-  const iv = Buffer.from(ivHex, 'hex');
-  const authTag = Buffer.from(authTagHex, 'hex');
-  const ciphertext = Buffer.from(ciphertextHex, 'hex');
-
-  const decipher = createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
-
-  return decipher.update(ciphertext) + decipher.final('utf8');
-};
+const encryptPrivateKey = encrypt;
+const decryptPrivateKey = decrypt;
 
 const generateSshKeyPair = (): { publicKey: string; privateKey: string } => {
   const keyPath = join(tmpdir(), `builder-keygen-${randomBytes(8).toString('hex')}`);
@@ -41,4 +23,17 @@ const generateSshKeyPair = (): { publicKey: string; privateKey: string } => {
   }
 };
 
-export { encryptPrivateKey, decryptPrivateKey, generateSshKeyPair };
+const derivePublicKeyFromPrivate = (privateKey: string): string => {
+  const keyPath = join(tmpdir(), `builder-derive-${randomBytes(8).toString('hex')}`);
+  try {
+    writeFileSync(keyPath, privateKey, { mode: 0o600 });
+    const publicKey = execSync(`ssh-keygen -y -f ${keyPath}`, { stdio: 'pipe' }).toString().trim();
+    return publicKey;
+  } catch {
+    throw new IdentityError('Invalid private key format');
+  } finally {
+    try { unlinkSync(keyPath); } catch { /* ignore */ }
+  }
+};
+
+export { encryptPrivateKey, decryptPrivateKey, generateSshKeyPair, derivePublicKeyFromPrivate };

@@ -2,6 +2,7 @@ type SessionEvent =
   | { type: 'agent:output'; data: { text: string; messageType: string } }
   | { type: 'agent:tool_use'; data: { tool: string; input: unknown } }
   | { type: 'agent:tool_result'; data: { tool: string; output: unknown } }
+  | { type: 'user:message'; data: { message: string } }
   | { type: 'session:status'; data: { status: string } }
   | { type: 'session:waiting_for_input'; data: { prompt: string } }
   | { type: 'session:completed'; data: { summary: string } }

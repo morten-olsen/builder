@@ -12,23 +12,25 @@ npm install -g @morten-olsen/builder-cli
 builder server start
 ```
 
-Starts the HTTP server with the bundled web UI. Binds to the configured `HOST` and `PORT` (defaults to `0.0.0.0:3000`).
+Starts the HTTP server with the bundled web UI. Binds to the configured `HOST` and `PORT` (defaults to `0.0.0.0:4120`).
 
 ## Auth
 
 ```sh
-builder auth register --email <email> --password <password>
-builder auth login --email <email> --password <password>
+builder auth register --email <email> [--password <password>]
+builder auth login --email <email> [--password <password>]
 builder auth me
 builder auth logout
 ```
 
-| Command | Description |
-|---|---|
+If `--password` is omitted, you'll be prompted with masked input (not saved to shell history). For `register`, you'll be asked to confirm the password. Pass `--password` directly for scripting or CI.
+
+| Command    | Description                                           |
+| ---------- | ----------------------------------------------------- |
 | `register` | Create a new account and save the auth token locally. |
-| `login` | Log in to an existing account. |
-| `me` | Show the currently authenticated user. |
-| `logout` | Clear saved credentials. |
+| `login`    | Log in to an existing account.                        |
+| `me`       | Show the currently authenticated user.                |
+| `logout`   | Clear saved credentials.                              |
 
 ## Identities
 
@@ -41,20 +43,20 @@ builder identity get <id>
 builder identity delete <id>
 ```
 
-| Command | Description |
-|---|---|
-| `create` | Generate a new Ed25519 identity. Outputs the public key. |
-| `list` | List all identities for the current user. |
-| `get <id>` | Show identity details including the public key. |
-| `delete <id>` | Permanently delete an identity. |
+| Command       | Description                                              |
+| ------------- | -------------------------------------------------------- |
+| `create`      | Generate a new Ed25519 identity. Outputs the public key. |
+| `list`        | List all identities for the current user.                |
+| `get <id>`    | Show identity details including the public key.          |
+| `delete <id>` | Permanently delete an identity.                          |
 
 ### Create options
 
-| Flag | Required | Description |
-|---|---|---|
-| `--name <name>` | Yes | A label for this identity (e.g. "personal", "work"). |
-| `--git-name <name>` | Yes | Git author name used in commits. |
-| `--git-email <email>` | Yes | Git author email used in commits. |
+| Flag                  | Required | Description                                          |
+| --------------------- | -------- | ---------------------------------------------------- |
+| `--name <name>`       | Yes      | A label for this identity (e.g. "personal", "work"). |
+| `--git-name <name>`   | Yes      | Git author name used in commits.                     |
+| `--git-email <email>` | Yes      | Git author email used in commits.                    |
 
 ## Repos
 
@@ -69,23 +71,23 @@ builder repo delete <id>
 builder repo sessions <id>
 ```
 
-| Command | Description |
-|---|---|
-| `create` | Register a new repo. |
-| `list` | List all repos for the current user. |
-| `get <id>` | Show repo details. |
-| `update <id>` | Update repo settings. Only provided fields are changed. |
-| `delete <id>` | Permanently delete a repo. |
-| `sessions <id>` | List all sessions for a repo. |
+| Command         | Description                                             |
+| --------------- | ------------------------------------------------------- |
+| `create`        | Register a new repo.                                    |
+| `list`          | List all repos for the current user.                    |
+| `get <id>`      | Show repo details.                                      |
+| `update <id>`   | Update repo settings. Only provided fields are changed. |
+| `delete <id>`   | Permanently delete a repo.                              |
+| `sessions <id>` | List all sessions for a repo.                           |
 
 ### Create / update options
 
-| Flag | Required | Description |
-|---|---|---|
-| `--name <name>` | create only | A label for this repo. |
-| `--url <git-url>` | create only | SSH clone URL (e.g. `git@github.com:you/repo.git`). |
-| `--branch <branch>` | No | Default branch for new sessions. |
-| `--identity <id>` | No | Default identity ID for new sessions. |
+| Flag                | Required    | Description                                         |
+| ------------------- | ----------- | --------------------------------------------------- |
+| `--name <name>`     | create only | A label for this repo.                              |
+| `--url <git-url>`   | create only | SSH clone URL (e.g. `git@github.com:you/repo.git`). |
+| `--branch <branch>` | No          | Default branch for new sessions.                    |
+| `--identity <id>`   | No          | Default identity ID for new sessions.               |
 
 ## Sessions
 
@@ -101,30 +103,30 @@ builder session stop <id>
 builder session delete <id>
 ```
 
-| Command | Description |
-|---|---|
-| `create` | Create a session without starting the agent. |
-| `run` | Create a session and immediately run the agent, streaming output to the terminal. |
-| `list` | List all sessions for the current user. |
-| `get <id>` | Show session details and status. |
-| `send <id>` | Send a follow-up message to an idle session and stream the agent's response. |
-| `stop <id>` | Gracefully stop an idle session. |
-| `delete <id>` | Abort (if running) and permanently delete a session. |
+| Command       | Description                                                                       |
+| ------------- | --------------------------------------------------------------------------------- |
+| `create`      | Create a session without starting the agent.                                      |
+| `run`         | Create a session and immediately run the agent, streaming output to the terminal. |
+| `list`        | List all sessions for the current user.                                           |
+| `get <id>`    | Show session details and status.                                                  |
+| `send <id>`   | Send a follow-up message to an idle session and stream the agent's response.      |
+| `stop <id>`   | Gracefully stop an idle session.                                                  |
+| `delete <id>` | Abort (if running) and permanently delete a session.                              |
 
 ### Create / run options
 
-| Flag | Required | Description |
-|---|---|---|
-| `--repo <id>` | Yes | Repo ID to use. |
-| `--prompt "..."` | Yes | Task description for the agent. |
-| `--identity <id>` | No | Override the repo's default identity. |
-| `--branch <branch>` | No | Override the repo's default branch. |
+| Flag                | Required | Description                           |
+| ------------------- | -------- | ------------------------------------- |
+| `--repo <id>`       | Yes      | Repo ID to use.                       |
+| `--prompt "..."`    | Yes      | Task description for the agent.       |
+| `--identity <id>`   | No       | Override the repo's default identity. |
+| `--branch <branch>` | No       | Override the repo's default branch.   |
 
 ### Send options
 
-| Flag | Required | Description |
-|---|---|---|
-| `--message "..."` | Yes | Follow-up message to send to the agent. |
+| Flag              | Required | Description                             |
+| ----------------- | -------- | --------------------------------------- |
+| `--message "..."` | Yes      | Follow-up message to send to the agent. |
 
 ## Admin
 

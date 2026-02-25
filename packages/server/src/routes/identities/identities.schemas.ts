@@ -18,12 +18,8 @@ const createIdentityBodySchema = z
     privateKey: z.string().optional(),
   })
   .refine(
-    (data) => {
-      const hasPublic = data.publicKey !== undefined;
-      const hasPrivate = data.privateKey !== undefined;
-      return hasPublic === hasPrivate;
-    },
-    { message: 'publicKey and privateKey must both be provided or both omitted' },
+    (data) => !data.publicKey || data.privateKey,
+    { message: 'publicKey cannot be provided without privateKey' },
   );
 
 const updateIdentityBodySchema = z.object({

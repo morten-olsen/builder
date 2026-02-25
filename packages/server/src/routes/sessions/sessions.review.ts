@@ -32,7 +32,7 @@ const requireUser = (user: AuthTokenPayload | null, reply: FastifyReply): AuthTo
 const registerReviewRoutes = (app: FastifyInstance): void => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-  typedApp.get('/sessions/:sessionId/review/files', {
+  typedApp.get('/api/sessions/:sessionId/review/files', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -121,7 +121,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/sessions/:sessionId/review/diff', {
+  typedApp.get('/api/sessions/:sessionId/review/diff', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -180,7 +180,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/sessions/:sessionId/review/branches', {
+  typedApp.get('/api/sessions/:sessionId/review/branches', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -214,7 +214,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/sessions/:sessionId/review/reviewed', {
+  typedApp.post('/api/sessions/:sessionId/review/reviewed', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -262,7 +262,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.delete('/sessions/:sessionId/review/reviewed', {
+  typedApp.delete('/api/sessions/:sessionId/review/reviewed', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -291,7 +291,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/sessions/:sessionId/review/push', {
+  typedApp.post('/api/sessions/:sessionId/review/push', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,

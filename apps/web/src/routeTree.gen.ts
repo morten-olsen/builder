@@ -19,7 +19,9 @@ import { Route as AuthenticatedNewRouteImport } from './routes/_authenticated/ne
 import { Route as AuthenticatedIdentitiesRouteImport } from './routes/_authenticated/identities'
 import { Route as AuthenticatedSessionsIndexRouteImport } from './routes/_authenticated/sessions/index'
 import { Route as AuthenticatedReposIndexRouteImport } from './routes/_authenticated/repos/index'
+import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings/security'
 import { Route as AuthenticatedSettingsReposRouteImport } from './routes/_authenticated/settings/repos'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsIdentitiesRouteImport } from './routes/_authenticated/settings/identities'
 import { Route as AuthenticatedSessionsSessionIdRouteImport } from './routes/_authenticated/sessions/$sessionId'
 import { Route as AuthenticatedReposRepoIdRouteImport } from './routes/_authenticated/repos/$repoId'
@@ -78,10 +80,22 @@ const AuthenticatedReposIndexRoute = AuthenticatedReposIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedReposRoute,
 } as any)
+const AuthenticatedSettingsSecurityRoute =
+  AuthenticatedSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsReposRoute =
   AuthenticatedSettingsReposRouteImport.update({
     id: '/repos',
     path: '/repos',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
 const AuthenticatedSettingsIdentitiesRoute =
@@ -138,7 +152,9 @@ export interface FileRoutesByFullPath {
   '/repos/$repoId': typeof AuthenticatedReposRepoIdRoute
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRouteWithChildren
   '/settings/identities': typeof AuthenticatedSettingsIdentitiesRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/repos': typeof AuthenticatedSettingsReposRouteWithChildren
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/repos/': typeof AuthenticatedReposIndexRoute
   '/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/sessions/$sessionId/review': typeof AuthenticatedSessionsSessionIdReviewRoute
@@ -154,6 +170,8 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/repos/$repoId': typeof AuthenticatedReposRepoIdRoute
   '/settings/identities': typeof AuthenticatedSettingsIdentitiesRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/repos': typeof AuthenticatedReposIndexRoute
   '/sessions': typeof AuthenticatedSessionsIndexRoute
   '/sessions/$sessionId/review': typeof AuthenticatedSessionsSessionIdReviewRoute
@@ -174,7 +192,9 @@ export interface FileRoutesById {
   '/_authenticated/repos/$repoId': typeof AuthenticatedReposRepoIdRoute
   '/_authenticated/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRouteWithChildren
   '/_authenticated/settings/identities': typeof AuthenticatedSettingsIdentitiesRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings/repos': typeof AuthenticatedSettingsReposRouteWithChildren
+  '/_authenticated/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/_authenticated/repos/': typeof AuthenticatedReposIndexRoute
   '/_authenticated/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/_authenticated/sessions/$sessionId/review': typeof AuthenticatedSessionsSessionIdReviewRoute
@@ -195,7 +215,9 @@ export interface FileRouteTypes {
     | '/repos/$repoId'
     | '/sessions/$sessionId'
     | '/settings/identities'
+    | '/settings/notifications'
     | '/settings/repos'
+    | '/settings/security'
     | '/repos/'
     | '/sessions/'
     | '/sessions/$sessionId/review'
@@ -211,6 +233,8 @@ export interface FileRouteTypes {
     | '/'
     | '/repos/$repoId'
     | '/settings/identities'
+    | '/settings/notifications'
+    | '/settings/security'
     | '/repos'
     | '/sessions'
     | '/sessions/$sessionId/review'
@@ -230,7 +254,9 @@ export interface FileRouteTypes {
     | '/_authenticated/repos/$repoId'
     | '/_authenticated/sessions/$sessionId'
     | '/_authenticated/settings/identities'
+    | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/repos'
+    | '/_authenticated/settings/security'
     | '/_authenticated/repos/'
     | '/_authenticated/sessions/'
     | '/_authenticated/sessions/$sessionId/review'
@@ -316,11 +342,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReposIndexRouteImport
       parentRoute: typeof AuthenticatedReposRoute
     }
+    '/_authenticated/settings/security': {
+      id: '/_authenticated/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AuthenticatedSettingsSecurityRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/repos': {
       id: '/_authenticated/settings/repos'
       path: '/repos'
       fullPath: '/settings/repos'
       preLoaderRoute: typeof AuthenticatedSettingsReposRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
     '/_authenticated/settings/identities': {
@@ -441,12 +481,17 @@ const AuthenticatedSettingsReposRouteWithChildren =
 
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsIdentitiesRoute: typeof AuthenticatedSettingsIdentitiesRoute
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
   AuthenticatedSettingsReposRoute: typeof AuthenticatedSettingsReposRouteWithChildren
+  AuthenticatedSettingsSecurityRoute: typeof AuthenticatedSettingsSecurityRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsIdentitiesRoute: AuthenticatedSettingsIdentitiesRoute,
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
   AuthenticatedSettingsReposRoute: AuthenticatedSettingsReposRouteWithChildren,
+  AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
 }
 
 const AuthenticatedSettingsRouteWithChildren =

@@ -4,6 +4,7 @@ import { AuthService } from '@morten-olsen/builder-server';
 import { clearAuth, requireAuth, saveAuth } from '../cli.auth-store.js';
 import { createCliContext } from '../cli.context.js';
 import { isJson, printJson } from '../cli.output.js';
+import { promptPassword, promptPasswordWithConfirm } from '../cli.prompt.js';
 
 const registerAuthCommands = (program: Command): void => {
   const auth = program.command('auth').description('Authentication commands');
@@ -12,14 +13,15 @@ const registerAuthCommands = (program: Command): void => {
     .command('register')
     .description('Register a new account')
     .requiredOption('--email <email>', 'Email address')
-    .requiredOption('--password <password>', 'Password')
+    .option('--password <password>', 'Password (omit to enter securely)')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ email: string; password: string }>();
+      const opts = this.opts<{ email: string; password?: string }>();
+      const password = opts.password ?? (await promptPasswordWithConfirm('Password: '));
       const { services, cleanup } = await createCliContext();
       try {
         const authService = services.get(AuthService);
-        const result = await authService.register({ email: opts.email, password: opts.password });
+        const result = await authService.register({ email: opts.email, password });
         saveAuth({ token: result.token, userId: result.user.id, email: result.user.email });
 
         if (isJson(this)) {
@@ -36,14 +38,15 @@ const registerAuthCommands = (program: Command): void => {
     .command('login')
     .description('Log in to an existing account')
     .requiredOption('--email <email>', 'Email address')
-    .requiredOption('--password <password>', 'Password')
+    .option('--password <password>', 'Password (omit to enter securely)')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ email: string; password: string }>();
+      const opts = this.opts<{ email: string; password?: string }>();
+      const password = opts.password ?? (await promptPassword('Password: '));
       const { services, cleanup } = await createCliContext();
       try {
         const authService = services.get(AuthService);
-        const result = await authService.login({ email: opts.email, password: opts.password });
+        const result = await authService.login({ email: opts.email, password });
         saveAuth({ token: result.token, userId: result.user.id, email: result.user.email });
 
         if (isJson(this)) {
@@ -73,6 +76,29 @@ const registerAuthCommands = (program: Command): void => {
           console.log(`id:    ${user.id}`);
           console.log(`email: ${user.email}`);
           console.log(`since: ${user.createdAt}`);
+        }
+      } finally {
+        await cleanup();
+      }
+    });
+
+  auth
+    .command('change-password')
+    .description('Change your password')
+    .option('--json', 'Output as JSON')
+    .action(async function (this: Command) {
+      const { services, cleanup } = await createCliContext();
+      try {
+        const { userId } = await requireAuth(services);
+        const currentPassword = await promptPassword('Current password: ');
+        const newPassword = await promptPasswordWithConfirm('New password: ');
+        const authService = services.get(AuthService);
+        await authService.changePassword({ userId, currentPassword, newPassword });
+
+        if (isJson(this)) {
+          printJson({ success: true });
+        } else {
+          console.log('Password changed successfully.');
         }
       } finally {
         await cleanup();

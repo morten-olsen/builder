@@ -27,7 +27,7 @@ const requireUser = (user: AuthTokenPayload | null, reply: FastifyReply): AuthTo
 const registerRepoRoutes = (app: FastifyInstance): void => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-  typedApp.post('/repos', {
+  typedApp.post('/api/repos', {
     onRequest: [app.authenticate],
     schema: {
       body: createRepoBodySchema,
@@ -51,7 +51,7 @@ const registerRepoRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/repos', {
+  typedApp.get('/api/repos', {
     onRequest: [app.authenticate],
     schema: {
       response: {
@@ -67,7 +67,7 @@ const registerRepoRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/repos/:repoId', {
+  typedApp.get('/api/repos/:repoId', {
     onRequest: [app.authenticate],
     schema: {
       params: repoParamsSchema,
@@ -88,7 +88,7 @@ const registerRepoRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.put('/repos/:repoId', {
+  typedApp.put('/api/repos/:repoId', {
     onRequest: [app.authenticate],
     schema: {
       params: repoParamsSchema,
@@ -111,7 +111,7 @@ const registerRepoRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.delete('/repos/:repoId', {
+  typedApp.delete('/api/repos/:repoId', {
     onRequest: [app.authenticate],
     schema: {
       params: repoParamsSchema,
@@ -132,7 +132,7 @@ const registerRepoRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/repos/:repoId/sessions', {
+  typedApp.get('/api/repos/:repoId/sessions', {
     onRequest: [app.authenticate],
     schema: {
       params: repoParamsSchema,

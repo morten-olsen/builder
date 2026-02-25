@@ -1,6 +1,6 @@
-import fastify from 'fastify';
-import fastifySwagger from '@fastify/swagger';
-import fastifySwaggerUi from '@fastify/swagger-ui';
+import { fastify } from 'fastify';
+import { fastifySwagger } from '@fastify/swagger';
+import { fastifySwaggerUi } from '@fastify/swagger-ui';
 import {
   jsonSchemaTransform,
   serializerCompiler,
@@ -11,7 +11,7 @@ import {
 import type { Config } from '../config/config.js';
 import type { Services } from '../container/container.js';
 import { AuthService } from '../services/auth/auth.js';
-import { AuthError, InvalidCredentialsError, InvalidTokenError } from '../services/auth/auth.errors.js';
+import { AuthError, InvalidCredentialsError, InvalidTokenError, UserNotFoundError } from '../services/auth/auth.errors.js';
 import { AgentError } from '../services/agent/agent.errors.js';
 import { GitError } from '../services/git/git.errors.js';
 import {
@@ -29,6 +29,12 @@ import {
   SessionForbiddenError,
   SessionNotFoundError,
 } from '../services/session/session.errors.js';
+import {
+  NotificationError,
+  NotificationChannelNotFoundError,
+  NotificationForbiddenError,
+  NotificationProviderNotFoundError,
+} from '../services/notification/notification.errors.js';
 
 import './app.types.js';
 
@@ -101,6 +107,11 @@ const createApp = async (input: CreateAppInput) => {
       return;
     }
 
+    if (error instanceof UserNotFoundError) {
+      reply.code(404).send({ error: error.message });
+      return;
+    }
+
     if (error instanceof AuthError) {
       reply.code(409).send({ error: error.message });
       return;
@@ -151,6 +162,21 @@ const createApp = async (input: CreateAppInput) => {
       return;
     }
 
+    if (error instanceof NotificationChannelNotFoundError || error instanceof NotificationProviderNotFoundError) {
+      reply.code(404).send({ error: error.message });
+      return;
+    }
+
+    if (error instanceof NotificationForbiddenError) {
+      reply.code(403).send({ error: error.message });
+      return;
+    }
+
+    if (error instanceof NotificationError) {
+      reply.code(400).send({ error: error.message });
+      return;
+    }
+
     if (error instanceof GitError) {
       reply.code(502).send({ error: error.message });
       return;
@@ -161,6 +187,7 @@ const createApp = async (input: CreateAppInput) => {
       return;
     }
 
+    app.log.error(error);
     reply.code(500).send({ error: 'Internal server error' });
   });
 

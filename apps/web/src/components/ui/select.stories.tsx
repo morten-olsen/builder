@@ -11,9 +11,15 @@ const meta: Meta<typeof Select> = {
 type Story = StoryObj<typeof Select>;
 
 const repoOptions = [
-  { value: '1', label: 'my-project — git@github.com:org/repo.git' },
-  { value: '2', label: 'builder — git@github.com:org/builder.git' },
-  { value: '3', label: 'design-system — git@github.com:org/ds.git' },
+  { value: '1', label: 'my-project', description: 'git@github.com:org/repo.git' },
+  { value: '2', label: 'builder', description: 'git@github.com:org/builder.git' },
+  { value: '3', label: 'design-system', description: 'git@github.com:org/ds.git' },
+];
+
+const simpleOptions = [
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'system', label: 'System default' },
 ];
 
 const Default: Story = {
@@ -21,6 +27,23 @@ const Default: Story = {
     const [value, setValue] = useState('');
     return (
       <div className="w-72">
+        <Select
+          options={simpleOptions}
+          value={value}
+          onValueChange={setValue}
+          placeholder="select a theme..."
+        />
+      </div>
+    );
+  },
+};
+
+const WithDescriptions: Story = {
+  render: () => {
+    const [value, setValue] = useState('');
+    return (
+      <div className="w-80">
+        <Label>Repository</Label>
         <Select
           options={repoOptions}
           value={value}
@@ -73,7 +96,7 @@ const WithDisabledOption: Story = {
         <Select
           options={[
             ...repoOptions,
-            { value: '4', label: 'archived-repo (read-only)', disabled: true },
+            { value: '4', label: 'archived-repo', description: 'read-only', disabled: true },
           ]}
           value={value}
           onValueChange={setValue}
@@ -98,4 +121,4 @@ const Disabled: Story = {
 };
 
 export default meta;
-export { Default, WithLabel, Small, WithDisabledOption, Disabled };
+export { Default, WithDescriptions, WithLabel, Small, WithDisabledOption, Disabled };

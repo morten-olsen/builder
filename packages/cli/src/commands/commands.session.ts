@@ -279,7 +279,7 @@ const registerSessionCommands = (program: Command): void => {
         throw new Error('Not logged in. Run `builder auth login` or `builder auth register` first.');
       }
 
-      const baseUrl = process.env.BUILDER_SERVER_URL ?? 'http://localhost:3000';
+      const baseUrl = process.env.BUILDER_SERVER_URL ?? 'http://localhost:4120';
       const client = createHttpClient(baseUrl, auth.token);
 
       let exitCode = 0;
@@ -287,7 +287,7 @@ const registerSessionCommands = (program: Command): void => {
       // Start SSE stream first, then send the message.
       // streamSSE resolves when the `until` predicate returns true.
       const streamDone = client.streamSSE(
-        `/sessions/${id}/events`,
+        `/api/sessions/${id}/events`,
         (event) => {
           if (json) {
             console.log(JSON.stringify(event));
@@ -305,7 +305,7 @@ const registerSessionCommands = (program: Command): void => {
           event.type === 'session:error',
       );
 
-      await client.post(`/sessions/${id}/messages`, { message: opts.message });
+      await client.post(`/api/sessions/${id}/messages`, { message: opts.message });
 
       await streamDone;
 
@@ -326,10 +326,10 @@ const registerSessionCommands = (program: Command): void => {
         throw new Error('Not logged in. Run `builder auth login` or `builder auth register` first.');
       }
 
-      const baseUrl = process.env.BUILDER_SERVER_URL ?? 'http://localhost:3000';
+      const baseUrl = process.env.BUILDER_SERVER_URL ?? 'http://localhost:4120';
       const client = createHttpClient(baseUrl, auth.token);
 
-      await client.post(`/sessions/${id}/stop`, {});
+      await client.post(`/api/sessions/${id}/stop`, {});
       console.log(`Session ${id} stopped.`);
     });
 };

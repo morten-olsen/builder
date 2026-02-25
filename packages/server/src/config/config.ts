@@ -15,7 +15,7 @@ const configSchema = convict({
     port: {
       doc: 'The port to bind to',
       format: 'port',
-      default: 3000,
+      default: 4120,
       env: 'PORT',
     },
     host: {

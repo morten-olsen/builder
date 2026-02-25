@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 
 import { getClient, setToken as persistToken, clearToken, hasToken } from '../client/client';
 
@@ -33,7 +34,7 @@ const AuthProvider = ({ children }: AuthProviderProps): ReactNode => {
     }
 
     const validate = async (): Promise<void> => {
-      const { data, error } = await getClient().api.GET('/auth/me');
+      const { data, error } = await getClient().api.GET('/api/auth/me');
       if (error || !data) {
         clearToken();
       } else {
@@ -46,14 +47,16 @@ const AuthProvider = ({ children }: AuthProviderProps): ReactNode => {
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<void> => {
-    const { data, error } = await getClient().api.POST('/auth/login', {
+    const { data, error } = await getClient().api.POST('/api/auth/login', {
       body: { email, password },
     });
     if (error || !data) {
       throw new Error(error?.error ?? 'Login failed');
     }
     persistToken(data.token);
-    setUser(data.user);
+    flushSync(() => {
+      setUser(data.user);
+    });
   }, []);
 
   const logout = useCallback((): void => {

@@ -25,7 +25,7 @@ const ReviewPage = (): React.ReactNode => {
   const files = useQuery({
     queryKey: ['review-files', sessionId, compareRef],
     queryFn: async () => {
-      const { data, error } = await getClient().api.GET('/sessions/{sessionId}/review/files', {
+      const { data, error } = await getClient().api.GET('/api/sessions/{sessionId}/review/files', {
         params: {
           path: { sessionId },
           query: { compareRef },
@@ -39,7 +39,7 @@ const ReviewPage = (): React.ReactNode => {
   const diff = useQuery({
     queryKey: ['review-diff', sessionId, selectedFile, compareRef],
     queryFn: async () => {
-      const { data, error } = await getClient().api.GET('/sessions/{sessionId}/review/diff', {
+      const { data, error } = await getClient().api.GET('/api/sessions/{sessionId}/review/diff', {
         params: {
           path: { sessionId },
           query: { path: selectedFile ?? undefined, compareRef },
@@ -54,7 +54,7 @@ const ReviewPage = (): React.ReactNode => {
   const branches = useQuery({
     queryKey: ['review-branches', sessionId],
     queryFn: async () => {
-      const { data, error } = await getClient().api.GET('/sessions/{sessionId}/review/branches', {
+      const { data, error } = await getClient().api.GET('/api/sessions/{sessionId}/review/branches', {
         params: { path: { sessionId } },
       });
       if (error || !data) throw new Error(error?.error ?? 'Failed to load branches');
@@ -64,7 +64,7 @@ const ReviewPage = (): React.ReactNode => {
 
   const markReviewed = useMutation({
     mutationFn: async (path: string) => {
-      const { error } = await getClient().api.POST('/sessions/{sessionId}/review/reviewed', {
+      const { error } = await getClient().api.POST('/api/sessions/{sessionId}/review/reviewed', {
         params: { path: { sessionId } },
         body: { path },
       });
@@ -77,7 +77,7 @@ const ReviewPage = (): React.ReactNode => {
 
   const unmarkReviewed = useMutation({
     mutationFn: async (path: string) => {
-      const { error } = await getClient().api.DELETE('/sessions/{sessionId}/review/reviewed', {
+      const { error } = await getClient().api.DELETE('/api/sessions/{sessionId}/review/reviewed', {
         params: { path: { sessionId } },
         body: { path },
       });
@@ -90,7 +90,7 @@ const ReviewPage = (): React.ReactNode => {
 
   const push = useMutation({
     mutationFn: async (input: { branch: string; commitMessage?: string }) => {
-      const { data, error } = await getClient().api.POST('/sessions/{sessionId}/review/push', {
+      const { data, error } = await getClient().api.POST('/api/sessions/{sessionId}/review/push', {
         params: { path: { sessionId } },
         body: input,
       });

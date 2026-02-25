@@ -8,6 +8,7 @@ import {
 
 import { createCliContext } from '../cli.context.js';
 import { isJson, printJson, printTable } from '../cli.output.js';
+import { promptPasswordWithConfirm } from '../cli.prompt.js';
 
 const registerAdminCommands = (program: Command): void => {
   const admin = program.command('admin').description('Admin commands (all users)');
@@ -117,6 +118,29 @@ const registerAdminCommands = (program: Command): void => {
             { header: 'Branch', key: 'branch' },
             { header: 'Created', key: 'createdAt' },
           ]);
+        }
+      } finally {
+        await cleanup();
+      }
+    });
+  admin
+    .command('reset-password')
+    .description('Reset a user password')
+    .requiredOption('--user <userId>', 'User ID')
+    .option('--password <password>', 'New password (omit to enter securely)')
+    .option('--json', 'Output as JSON')
+    .action(async function (this: Command) {
+      const opts = this.opts<{ user: string; password?: string }>();
+      const newPassword = opts.password ?? (await promptPasswordWithConfirm('New password: '));
+      const { services, cleanup } = await createCliContext();
+      try {
+        const authService = services.get(AuthService);
+        await authService.adminResetPassword({ userId: opts.user, newPassword });
+
+        if (isJson(this)) {
+          printJson({ success: true });
+        } else {
+          console.log('Password reset successfully.');
         }
       } finally {
         await cleanup();

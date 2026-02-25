@@ -26,7 +26,7 @@ const useSessionsGrouped = (): { groups: GroupedSessions; isLoading: boolean } =
   const sessions = useQuery({
     queryKey: ['sessions'],
     queryFn: async () => {
-      const { data } = await getClient().api.GET('/sessions');
+      const { data } = await getClient().api.GET('/api/sessions');
       return data ?? [];
     },
   });

@@ -26,4 +26,11 @@ class InvalidTokenError extends AuthError {
   }
 }
 
-export { AuthError, InvalidCredentialsError, EmailAlreadyExistsError, InvalidTokenError };
+class UserNotFoundError extends AuthError {
+  constructor() {
+    super('User not found');
+    this.name = 'UserNotFoundError';
+  }
+}
+
+export { AuthError, InvalidCredentialsError, EmailAlreadyExistsError, InvalidTokenError, UserNotFoundError };

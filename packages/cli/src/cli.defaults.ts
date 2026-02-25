@@ -42,7 +42,7 @@ const applyCliDefaults = (): void => {
   setDefaultEnv('SESSION_DATA_DIR', path.join(BUILDER_HOME, 'data'));
   setDefaultEnv('JWT_SECRET', secrets.jwtSecret);
   setDefaultEnv('ENCRYPTION_KEY', secrets.encryptionKey);
-  setDefaultEnv('BUILDER_SERVER_URL', 'http://localhost:3000');
+  setDefaultEnv('BUILDER_SERVER_URL', 'http://localhost:4120');
 };
 
 // Auto-apply at import time — this module MUST be imported before @morten-olsen/builder-server

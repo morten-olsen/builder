@@ -56,7 +56,7 @@ describe('session routes', () => {
 
     const registerRes = await app.inject({
       method: 'POST',
-      url: '/auth/register',
+      url: '/api/auth/register',
       payload: { email: 'test@example.com', password: 'password123' },
     });
     const body = registerRes.json();
@@ -65,7 +65,7 @@ describe('session routes', () => {
 
     const identityRes = await app.inject({
       method: 'POST',
-      url: `/users/${userId}/identities`,
+      url: `/api/users/${userId}/identities`,
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: 'Test Identity',
@@ -77,7 +77,7 @@ describe('session routes', () => {
 
     const repoRes = await app.inject({
       method: 'POST',
-      url: '/repos',
+      url: '/api/repos',
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: 'Test Repo',
@@ -99,7 +99,7 @@ describe('session routes', () => {
   const createSession = async (prompt = 'Fix the bug'): Promise<Record<string, unknown>> => {
     const res = await app.inject({
       method: 'POST',
-      url: '/sessions',
+      url: '/api/sessions',
       headers: authHeader(),
       payload: {
         repoId,
@@ -113,7 +113,7 @@ describe('session routes', () => {
     it('creates a session', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/sessions',
+        url: '/api/sessions',
         headers: authHeader(),
         payload: {
           repoId,
@@ -132,7 +132,7 @@ describe('session routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/sessions',
+        url: '/api/sessions',
         payload: {
           repoId,
           prompt: 'Fix',
@@ -145,7 +145,7 @@ describe('session routes', () => {
     it('returns 400 for missing fields', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/sessions',
+        url: '/api/sessions',
         headers: authHeader(),
         payload: { repoId },
       });
@@ -161,7 +161,7 @@ describe('session routes', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/sessions',
+        url: '/api/sessions',
         headers: authHeader(),
       });
 
@@ -172,7 +172,7 @@ describe('session routes', () => {
     it('returns empty array when no sessions', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/sessions',
+        url: '/api/sessions',
         headers: authHeader(),
       });
 
@@ -183,7 +183,7 @@ describe('session routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/sessions',
+        url: '/api/sessions',
       });
 
       expect(response.statusCode).toBe(401);
@@ -196,7 +196,7 @@ describe('session routes', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/sessions/${created.id}`,
+        url: `/api/sessions/${created.id}`,
         headers: authHeader(),
       });
 
@@ -207,7 +207,7 @@ describe('session routes', () => {
     it('returns 404 for non-existent session', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/sessions/non-existent',
+        url: '/api/sessions/non-existent',
         headers: authHeader(),
       });
 
@@ -217,7 +217,7 @@ describe('session routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/sessions/some-id',
+        url: '/api/sessions/some-id',
       });
 
       expect(response.statusCode).toBe(401);
@@ -230,7 +230,7 @@ describe('session routes', () => {
 
       const response = await app.inject({
         method: 'DELETE',
-        url: `/sessions/${created.id}`,
+        url: `/api/sessions/${created.id}`,
         headers: authHeader(),
       });
 
@@ -238,7 +238,7 @@ describe('session routes', () => {
 
       const getRes = await app.inject({
         method: 'GET',
-        url: `/sessions/${created.id}`,
+        url: `/api/sessions/${created.id}`,
         headers: authHeader(),
       });
       expect(getRes.statusCode).toBe(404);
@@ -247,7 +247,7 @@ describe('session routes', () => {
     it('returns 404 for non-existent session', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: '/sessions/non-existent',
+        url: '/api/sessions/non-existent',
         headers: authHeader(),
       });
 
@@ -257,7 +257,7 @@ describe('session routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: '/sessions/some-id',
+        url: '/api/sessions/some-id',
       });
 
       expect(response.statusCode).toBe(401);
@@ -270,7 +270,7 @@ describe('session routes', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: `/sessions/${created.id}/messages`,
+        url: `/api/sessions/${created.id}/messages`,
         headers: authHeader(),
         payload: { message: 'Try a different approach' },
       });
@@ -281,7 +281,7 @@ describe('session routes', () => {
     it('returns 404 for non-existent session', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/sessions/non-existent/messages',
+        url: '/api/sessions/non-existent/messages',
         headers: authHeader(),
         payload: { message: 'hello' },
       });
@@ -292,7 +292,7 @@ describe('session routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/sessions/some-id/messages',
+        url: '/api/sessions/some-id/messages',
         payload: { message: 'hello' },
       });
 
@@ -306,7 +306,7 @@ describe('session routes', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: `/sessions/${created.id}/stop`,
+        url: `/api/sessions/${created.id}/stop`,
         headers: authHeader(),
       });
 
@@ -316,7 +316,7 @@ describe('session routes', () => {
     it('returns 404 for non-existent session', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/sessions/non-existent/stop',
+        url: '/api/sessions/non-existent/stop',
         headers: authHeader(),
       });
 
@@ -326,7 +326,7 @@ describe('session routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/sessions/some-id/stop',
+        url: '/api/sessions/some-id/stop',
       });
 
       expect(response.statusCode).toBe(401);
@@ -337,7 +337,7 @@ describe('session routes', () => {
     it('returns 404 for non-existent session', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/sessions/non-existent/events',
+        url: '/api/sessions/non-existent/events',
         headers: authHeader(),
       });
 
@@ -347,7 +347,7 @@ describe('session routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/sessions/some-id/events',
+        url: '/api/sessions/some-id/events',
       });
 
       expect(response.statusCode).toBe(401);

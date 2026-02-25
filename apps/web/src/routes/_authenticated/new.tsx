@@ -19,7 +19,7 @@ const NewSessionPage = (): React.ReactNode => {
   const repos = useQuery({
     queryKey: ['repos'],
     queryFn: async () => {
-      const { data } = await getClient().api.GET('/repos');
+      const { data } = await getClient().api.GET('/api/repos');
       return data ?? [];
     },
   });
@@ -28,7 +28,7 @@ const NewSessionPage = (): React.ReactNode => {
 
   const createSession = useMutation({
     mutationFn: async () => {
-      const { data, error } = await getClient().api.POST('/sessions', {
+      const { data, error } = await getClient().api.POST('/api/sessions', {
         body: {
           repoId,
           prompt,
@@ -90,7 +90,8 @@ const NewSessionPage = (): React.ReactNode => {
             required
             options={repos.data?.map((r) => ({
               value: r.id,
-              label: `${r.name} — ${r.repoUrl}`,
+              label: r.name,
+              description: r.repoUrl,
             })) ?? []}
             value={repoId}
             onValueChange={setRepoId}

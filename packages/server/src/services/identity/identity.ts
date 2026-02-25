@@ -4,7 +4,7 @@ import type { Services } from '../../container/container.js';
 import { DatabaseService } from '../database/database.js';
 
 import { IdentityNotFoundError } from './identity.errors.js';
-import { decryptPrivateKey, encryptPrivateKey, generateSshKeyPair } from './identity.utils.js';
+import { decryptPrivateKey, derivePublicKeyFromPrivate, encryptPrivateKey, generateSshKeyPair } from './identity.utils.js';
 
 type Identity = {
   id: string;
@@ -57,8 +57,8 @@ class IdentityService {
     let publicKey: string;
     let encryptedPrivateKey: string;
 
-    if (input.publicKey && input.privateKey) {
-      publicKey = input.publicKey;
+    if (input.privateKey) {
+      publicKey = input.publicKey ?? derivePublicKeyFromPrivate(input.privateKey);
       encryptedPrivateKey = encryptPrivateKey(input.privateKey, this.#encryptionKey);
     } else {
       const keyPair = generateSshKeyPair();

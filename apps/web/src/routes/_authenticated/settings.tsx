@@ -3,6 +3,8 @@ import { createFileRoute, Link, Outlet, useMatches } from '@tanstack/react-route
 const tabs = [
   { to: '/settings/repos' as const, label: 'Repos' },
   { to: '/settings/identities' as const, label: 'Identities' },
+  { to: '/settings/notifications' as const, label: 'Notifications' },
+  { to: '/settings/security' as const, label: 'Security' },
 ];
 
 const SettingsLayout = (): React.ReactNode => {

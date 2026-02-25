@@ -34,7 +34,7 @@ const requireUser = (user: AuthTokenPayload | null, reply: FastifyReply): AuthTo
 const registerSessionRoutes = (app: FastifyInstance): void => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-  typedApp.post('/sessions', {
+  typedApp.post('/api/sessions', {
     onRequest: [app.authenticate],
     schema: {
       body: createSessionBodySchema,
@@ -80,7 +80,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/sessions', {
+  typedApp.get('/api/sessions', {
     onRequest: [app.authenticate],
     schema: {
       response: {
@@ -96,7 +96,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/sessions/:sessionId', {
+  typedApp.get('/api/sessions/:sessionId', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -118,7 +118,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.delete('/sessions/:sessionId', {
+  typedApp.delete('/api/sessions/:sessionId', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -157,7 +157,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/sessions/:sessionId/messages', {
+  typedApp.post('/api/sessions/:sessionId/messages', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -183,7 +183,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/sessions/:sessionId/stop', {
+  typedApp.post('/api/sessions/:sessionId/stop', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -208,7 +208,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/sessions/:sessionId/interrupt', {
+  typedApp.post('/api/sessions/:sessionId/interrupt', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -233,7 +233,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/sessions/:sessionId/messages', {
+  typedApp.get('/api/sessions/:sessionId/messages', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -257,7 +257,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.post('/sessions/:sessionId/revert', {
+  typedApp.post('/api/sessions/:sessionId/revert', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,
@@ -283,7 +283,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
     },
   });
 
-  typedApp.get('/sessions/:sessionId/events', {
+  typedApp.get('/api/sessions/:sessionId/events', {
     onRequest: [app.authenticate],
     schema: {
       params: sessionParamsSchema,

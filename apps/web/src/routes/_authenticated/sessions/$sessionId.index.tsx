@@ -15,7 +15,7 @@ const SessionDetailPage = (): React.ReactNode => {
   const session = useQuery({
     queryKey: ['sessions', sessionId],
     queryFn: async () => {
-      const { data, error } = await getClient().api.GET('/sessions/{sessionId}', {
+      const { data, error } = await getClient().api.GET('/api/sessions/{sessionId}', {
         params: { path: { sessionId } },
       });
       if (error || !data) throw new Error(error?.error ?? 'Not found');
@@ -25,7 +25,7 @@ const SessionDetailPage = (): React.ReactNode => {
 
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
-      const { error } = await getClient().api.POST('/sessions/{sessionId}/messages', {
+      const { error } = await getClient().api.POST('/api/sessions/{sessionId}/messages', {
         params: { path: { sessionId } },
         body: { message },
       });
@@ -38,7 +38,7 @@ const SessionDetailPage = (): React.ReactNode => {
 
   const interrupt = useMutation({
     mutationFn: async () => {
-      await getClient().api.POST('/sessions/{sessionId}/interrupt', {
+      await getClient().api.POST('/api/sessions/{sessionId}/interrupt', {
         params: { path: { sessionId } },
       });
     },
@@ -49,7 +49,7 @@ const SessionDetailPage = (): React.ReactNode => {
 
   const stopSession = useMutation({
     mutationFn: async () => {
-      await getClient().api.POST('/sessions/{sessionId}/stop', {
+      await getClient().api.POST('/api/sessions/{sessionId}/stop', {
         params: { path: { sessionId } },
       });
     },
@@ -60,7 +60,7 @@ const SessionDetailPage = (): React.ReactNode => {
 
   const revert = useMutation({
     mutationFn: async (messageId: string) => {
-      const { error } = await getClient().api.POST('/sessions/{sessionId}/revert', {
+      const { error } = await getClient().api.POST('/api/sessions/{sessionId}/revert', {
         params: { path: { sessionId } },
         body: { messageId },
       });

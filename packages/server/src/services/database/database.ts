@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import type { Generated } from 'kysely';
 import { Kysely, Migrator, SqliteDialect } from 'kysely';
 
 import { destroy, Services } from '../../container/container.js';
@@ -9,6 +10,8 @@ type UsersTable = {
   id: string;
   email: string;
   password_hash: string;
+  notifications_enabled: Generated<number>;
+  notification_events: Generated<string>;
   created_at: string;
   updated_at: string;
 };
@@ -35,6 +38,7 @@ type SessionsTable = {
   status: string;
   error: string | null;
   repo_id: string | null;
+  notifications_enabled: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -77,6 +81,17 @@ type FileReviewsTable = {
   created_at: string;
 };
 
+type NotificationChannelsTable = {
+  id: string;
+  user_id: string;
+  name: string;
+  provider: string;
+  encrypted_config: string;
+  enabled: number;
+  created_at: string;
+  updated_at: string;
+};
+
 type DatabaseSchema = {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -85,6 +100,7 @@ type DatabaseSchema = {
   messages: MessagesTable;
   session_events: SessionEventsTable;
   file_reviews: FileReviewsTable;
+  notification_channels: NotificationChannelsTable;
 };
 
 class DatabaseService {
@@ -130,5 +146,5 @@ class DatabaseService {
   };
 }
 
-export type { DatabaseSchema, UsersTable, IdentitiesTable, SessionsTable, ReposTable, MessagesTable, SessionEventsTable, FileReviewsTable };
+export type { DatabaseSchema, UsersTable, IdentitiesTable, SessionsTable, ReposTable, MessagesTable, SessionEventsTable, FileReviewsTable, NotificationChannelsTable };
 export { DatabaseService };

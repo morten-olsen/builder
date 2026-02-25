@@ -63,7 +63,7 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
       streamOptions = untilOrOptions;
     }
 
-    let url = `${options.baseUrl}/sessions/${encodeURIComponent(sessionId)}/events`;
+    let url = `${options.baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/events`;
     if (streamOptions.afterSequence !== undefined) {
       url += `?after=${streamOptions.afterSequence}`;
     }
@@ -126,7 +126,7 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
     onEvent: (event: UserEvent) => void,
     streamOptions?: { signal?: AbortSignal },
   ): Promise<void> => {
-    const url = `${options.baseUrl}/events`;
+    const url = `${options.baseUrl}/api/events`;
 
     const headers: Record<string, string> = { Accept: 'text/event-stream' };
     if (token) {

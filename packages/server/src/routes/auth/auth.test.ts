@@ -27,7 +27,7 @@ describe('auth routes', () => {
     it('registers a new user', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'test@example.com', password: 'password123' },
       });
 
@@ -40,13 +40,13 @@ describe('auth routes', () => {
     it('returns 409 for duplicate email', async () => {
       await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'dup@example.com', password: 'password123' },
       });
 
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'dup@example.com', password: 'password456' },
       });
 
@@ -56,7 +56,7 @@ describe('auth routes', () => {
     it('returns 400 for invalid email', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'not-an-email', password: 'password123' },
       });
 
@@ -66,7 +66,7 @@ describe('auth routes', () => {
     it('returns 400 for short password', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'test@example.com', password: 'short' },
       });
 
@@ -78,13 +78,13 @@ describe('auth routes', () => {
     it('logs in with valid credentials', async () => {
       await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'login@example.com', password: 'password123' },
       });
 
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/login',
+        url: '/api/auth/login',
         payload: { email: 'login@example.com', password: 'password123' },
       });
 
@@ -97,13 +97,13 @@ describe('auth routes', () => {
     it('returns 401 for wrong password', async () => {
       await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'login2@example.com', password: 'password123' },
       });
 
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/login',
+        url: '/api/auth/login',
         payload: { email: 'login2@example.com', password: 'wrongpass' },
       });
 
@@ -113,7 +113,7 @@ describe('auth routes', () => {
     it('returns 401 for non-existent user', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/login',
+        url: '/api/auth/login',
         payload: { email: 'nobody@example.com', password: 'anything' },
       });
 
@@ -125,14 +125,14 @@ describe('auth routes', () => {
     it('returns user profile with valid token', async () => {
       const registerRes = await app.inject({
         method: 'POST',
-        url: '/auth/register',
+        url: '/api/auth/register',
         payload: { email: 'me@example.com', password: 'password123' },
       });
       const { token } = registerRes.json();
 
       const response = await app.inject({
         method: 'GET',
-        url: '/auth/me',
+        url: '/api/auth/me',
         headers: { authorization: `Bearer ${token}` },
       });
 
@@ -144,7 +144,7 @@ describe('auth routes', () => {
     it('returns 401 without token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/auth/me',
+        url: '/api/auth/me',
       });
 
       expect(response.statusCode).toBe(401);
@@ -153,8 +153,89 @@ describe('auth routes', () => {
     it('returns 401 with invalid token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/auth/me',
+        url: '/api/auth/me',
         headers: { authorization: 'Bearer invalid-token' },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+  });
+
+  describe('PUT /auth/password', () => {
+    it('changes password successfully', async () => {
+      const registerRes = await app.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        payload: { email: 'changepw@example.com', password: 'oldpassword1' },
+      });
+      const { token } = registerRes.json();
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/api/auth/password',
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: 'oldpassword1', newPassword: 'newpassword1' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ success: true });
+
+      const loginNew = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'changepw@example.com', password: 'newpassword1' },
+      });
+      expect(loginNew.statusCode).toBe(200);
+
+      const loginOld = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'changepw@example.com', password: 'oldpassword1' },
+      });
+      expect(loginOld.statusCode).toBe(401);
+    });
+
+    it('returns 401 for wrong current password', async () => {
+      const registerRes = await app.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        payload: { email: 'wrongpw@example.com', password: 'password123' },
+      });
+      const { token } = registerRes.json();
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/api/auth/password',
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: 'wrongpassword', newPassword: 'newpassword1' },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('returns 400 for new password too short', async () => {
+      const registerRes = await app.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        payload: { email: 'shortpw@example.com', password: 'password123' },
+      });
+      const { token } = registerRes.json();
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/api/auth/password',
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: 'password123', newPassword: 'short' },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('returns 401 without token', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/api/auth/password',
+        payload: { currentPassword: 'password123', newPassword: 'newpassword1' },
       });
 
       expect(response.statusCode).toBe(401);

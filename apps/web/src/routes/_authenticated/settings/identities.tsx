@@ -8,7 +8,7 @@ import { Button } from '../../../components/ui/button.js';
 import { Card } from '../../../components/ui/card.js';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog.js';
 import { EmptyState } from '../../../components/ui/empty-state.js';
-import { Input } from '../../../components/ui/input.js';
+import { Input, Textarea } from '../../../components/ui/input.js';
 import { Label } from '../../../components/ui/label.js';
 import { SectionHeader } from '../../../components/ui/section-header.js';
 
@@ -16,15 +16,17 @@ const IdentitiesPage = (): React.ReactNode => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
+  const [mode, setMode] = useState<'generate' | 'import'>('generate');
   const [name, setName] = useState('');
   const [gitName, setGitName] = useState('');
   const [gitEmail, setGitEmail] = useState('');
+  const [privateKey, setPrivateKey] = useState('');
 
   const identities = useQuery({
     queryKey: ['identities'],
     queryFn: async () => {
       if (!user) return [];
-      const { data } = await getClient().api.GET('/users/{userId}/identities', {
+      const { data } = await getClient().api.GET('/api/users/{userId}/identities', {
         params: { path: { userId: user.id } },
       });
       return data ?? [];
@@ -35,9 +37,14 @@ const IdentitiesPage = (): React.ReactNode => {
   const createIdentity = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data, error } = await getClient().api.POST('/users/{userId}/identities', {
+      const { data, error } = await getClient().api.POST('/api/users/{userId}/identities', {
         params: { path: { userId: user.id } },
-        body: { name, gitAuthorName: gitName, gitAuthorEmail: gitEmail },
+        body: {
+          name,
+          gitAuthorName: gitName,
+          gitAuthorEmail: gitEmail,
+          ...(mode === 'import' ? { privateKey } : {}),
+        },
       });
       if (error || !data) throw new Error(error?.error ?? 'Failed to create identity');
       return data;
@@ -45,16 +52,18 @@ const IdentitiesPage = (): React.ReactNode => {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['identities'] });
       setShowCreate(false);
+      setMode('generate');
       setName('');
       setGitName('');
       setGitEmail('');
+      setPrivateKey('');
     },
   });
 
   const deleteIdentity = useMutation({
     mutationFn: async (identityId: string) => {
       if (!user) throw new Error('Not authenticated');
-      await getClient().api.DELETE('/users/{userId}/identities/{identityId}', {
+      await getClient().api.DELETE('/api/users/{userId}/identities/{identityId}', {
         params: { path: { userId: user.id, identityId } },
       });
     },
@@ -86,6 +95,31 @@ const IdentitiesPage = (): React.ReactNode => {
           onSubmit={handleCreate}
           className="mb-4 rounded-lg border border-border-base bg-surface-1 p-4"
         >
+          <div className="mb-3 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMode('generate')}
+              className={`rounded px-2.5 py-1 font-mono text-xs transition-colors ${
+                mode === 'generate'
+                  ? 'bg-accent-dim text-text-bright'
+                  : 'bg-surface-2 text-text-muted hover:text-text-dim'
+              }`}
+            >
+              generate new key
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('import')}
+              className={`rounded px-2.5 py-1 font-mono text-xs transition-colors ${
+                mode === 'import'
+                  ? 'bg-accent-dim text-text-bright'
+                  : 'bg-surface-2 text-text-muted hover:text-text-dim'
+              }`}
+            >
+              import existing key
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <Label>Name</Label>
@@ -117,6 +151,23 @@ const IdentitiesPage = (): React.ReactNode => {
             </div>
           </div>
 
+          {mode === 'import' && (
+            <div className="mt-3">
+              <Label>Private key</Label>
+              <Textarea
+                required
+                rows={6}
+                value={privateKey}
+                onChange={(e) => setPrivateKey(e.target.value)}
+                placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                className="!text-xs !leading-snug"
+              />
+              <p className="mt-1 font-mono text-ui text-text-muted">
+                the public key will be derived automatically
+              </p>
+            </div>
+          )}
+
           {createIdentity.error && (
             <p className="mt-3 font-mono text-xs text-danger">
               {createIdentity.error instanceof Error ? createIdentity.error.message : 'Failed'}
@@ -124,7 +175,7 @@ const IdentitiesPage = (): React.ReactNode => {
           )}
 
           <Button type="submit" disabled={createIdentity.isPending} className="mt-3">
-            {createIdentity.isPending ? 'creating...' : 'create identity'}
+            {createIdentity.isPending ? 'creating...' : mode === 'import' ? 'import identity' : 'create identity'}
           </Button>
         </form>
       )}

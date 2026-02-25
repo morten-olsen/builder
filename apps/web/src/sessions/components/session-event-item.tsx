@@ -16,6 +16,15 @@ const SessionEventItem = ({ event, snapshotMessageId, onRevert, isReverting }: S
   const data = event.data as Record<string, unknown>;
 
   switch (event.type) {
+    case 'user:message':
+      return (
+        <div className="flex justify-end">
+          <div className="max-w-[80%] whitespace-pre-wrap rounded-lg bg-accent-subtle px-3 py-2 font-mono text-sm text-text-bright">
+            {String(data.message ?? '')}
+          </div>
+        </div>
+      );
+
     case 'agent:output':
       return <AssistantMessage text={String(data.text ?? '')} />;
 

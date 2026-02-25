@@ -5,7 +5,7 @@ import type { Config } from './config.js';
 
 const defaultTestConfig: Config = {
   env: 'test',
-  server: { port: 3000, host: '0.0.0.0' },
+  server: { port: 4120, host: '0.0.0.0' },
   db: { path: ':memory:' },
   jwt: { secret: 'test-secret-key', expiresIn: '24h' },
   encryption: { key: 'a'.repeat(64) },

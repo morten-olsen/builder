@@ -3,6 +3,7 @@ import { fastifyStatic } from '@fastify/static';
 import { frontendPath } from '@morten-olsen/builder-web';
 import {
   createApp,
+  DatabaseService,
   destroy,
   registerAllRoutes,
 } from '@morten-olsen/builder-server';
@@ -17,6 +18,13 @@ const registerServerCommands = (program: Command): void => {
     .description('Start the HTTP server')
     .action(async () => {
       const { services, config } = await createCliContext();
+
+      const db = await services.get(DatabaseService).getInstance();
+      await db
+        .updateTable('sessions')
+        .set({ status: 'failed', error: 'Server restarted', updated_at: new Date().toISOString() })
+        .where('status', 'in', ['running', 'idle'])
+        .execute();
 
       const app = await createApp({ services, config });
       registerAllRoutes(app);

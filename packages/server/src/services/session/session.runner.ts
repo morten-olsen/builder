@@ -191,6 +191,10 @@ const startSession = async (services: Services, sessionId: string): Promise<void
       content: session.prompt,
       commitSha: commitSha ?? undefined,
     });
+    eventBus.emit(sessionId, {
+      type: 'user:message',
+      data: { message: session.prompt },
+    });
     if (commitSha) {
       eventBus.emit(sessionId, {
         type: 'session:snapshot',
@@ -220,6 +224,10 @@ const sendSessionMessage = async (services: Services, sessionId: string, message
 
   const commitSha = await snapshotWorktree(services, sessionId);
   const userMessage = await messageService.create({ sessionId, role: 'user', content: message, commitSha: commitSha ?? undefined });
+  eventBus.emit(sessionId, {
+    type: 'user:message',
+    data: { message },
+  });
   if (commitSha) {
     eventBus.emit(sessionId, {
       type: 'session:snapshot',

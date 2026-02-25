@@ -5,7 +5,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import type { Services } from '../../container/container.js';
 import { DatabaseService } from '../database/database.js';
 
-import { EmailAlreadyExistsError, InvalidCredentialsError, InvalidTokenError } from './auth.errors.js';
+import { EmailAlreadyExistsError, InvalidCredentialsError, InvalidTokenError, UserNotFoundError } from './auth.errors.js';
 import { hashPassword, verifyPassword } from './auth.utils.js';
 
 type AuthTokenPayload = {
@@ -139,6 +139,53 @@ class AuthService {
       .execute();
 
     return rows.map((row) => ({ id: row.id, email: row.email, createdAt: row.created_at }));
+  };
+
+  changePassword = async (input: { userId: string; currentPassword: string; newPassword: string }): Promise<void> => {
+    const db = await this.#database.getInstance();
+
+    const user = await db
+      .selectFrom('users')
+      .select(['id', 'password_hash'])
+      .where('id', '=', input.userId)
+      .executeTakeFirst();
+
+    if (!user) {
+      throw new InvalidCredentialsError();
+    }
+
+    const valid = await verifyPassword(input.currentPassword, user.password_hash);
+    if (!valid) {
+      throw new InvalidCredentialsError();
+    }
+
+    const passwordHash = await hashPassword(input.newPassword);
+    await db
+      .updateTable('users')
+      .set({ password_hash: passwordHash, updated_at: new Date().toISOString() })
+      .where('id', '=', input.userId)
+      .execute();
+  };
+
+  adminResetPassword = async (input: { userId: string; newPassword: string }): Promise<void> => {
+    const db = await this.#database.getInstance();
+
+    const user = await db
+      .selectFrom('users')
+      .select('id')
+      .where('id', '=', input.userId)
+      .executeTakeFirst();
+
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+
+    const passwordHash = await hashPassword(input.newPassword);
+    await db
+      .updateTable('users')
+      .set({ password_hash: passwordHash, updated_at: new Date().toISOString() })
+      .where('id', '=', input.userId)
+      .execute();
   };
 
   #createToken = async (payload: AuthTokenPayload): Promise<string> => {

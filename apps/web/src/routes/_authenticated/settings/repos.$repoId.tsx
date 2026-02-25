@@ -25,7 +25,7 @@ const RepoDetailPage = (): React.ReactNode => {
   const repo = useQuery({
     queryKey: ['repos', repoId],
     queryFn: async () => {
-      const { data, error } = await getClient().api.GET('/repos/{repoId}', {
+      const { data, error } = await getClient().api.GET('/api/repos/{repoId}', {
         params: { path: { repoId } },
       });
       if (error || !data) throw new Error(error?.error ?? 'Not found');
@@ -36,7 +36,7 @@ const RepoDetailPage = (): React.ReactNode => {
   const sessions = useQuery({
     queryKey: ['repos', repoId, 'sessions'],
     queryFn: async () => {
-      const { data } = await getClient().api.GET('/repos/{repoId}/sessions', {
+      const { data } = await getClient().api.GET('/api/repos/{repoId}/sessions', {
         params: { path: { repoId } },
       });
       return data ?? [];
@@ -47,7 +47,7 @@ const RepoDetailPage = (): React.ReactNode => {
     queryKey: ['identities'],
     queryFn: async () => {
       if (!user) return [];
-      const { data } = await getClient().api.GET('/users/{userId}/identities', {
+      const { data } = await getClient().api.GET('/api/users/{userId}/identities', {
         params: { path: { userId: user.id } },
       });
       return data ?? [];
@@ -57,7 +57,7 @@ const RepoDetailPage = (): React.ReactNode => {
 
   const updateRepo = useMutation({
     mutationFn: async (body: { defaultIdentityId?: string | null; defaultBranch?: string | null }) => {
-      const { data, error } = await getClient().api.PUT('/repos/{repoId}', {
+      const { data, error } = await getClient().api.PUT('/api/repos/{repoId}', {
         params: { path: { repoId } },
         body,
       });
@@ -71,7 +71,7 @@ const RepoDetailPage = (): React.ReactNode => {
 
   const deleteRepo = useMutation({
     mutationFn: async () => {
-      await getClient().api.DELETE('/repos/{repoId}', {
+      await getClient().api.DELETE('/api/repos/{repoId}', {
         params: { path: { repoId } },
       });
     },
@@ -83,7 +83,7 @@ const RepoDetailPage = (): React.ReactNode => {
 
   const createSession = useMutation({
     mutationFn: async () => {
-      const { data, error } = await getClient().api.POST('/sessions', {
+      const { data, error } = await getClient().api.POST('/api/sessions', {
         body: {
           repoId,
           prompt,

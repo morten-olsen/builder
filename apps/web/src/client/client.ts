@@ -7,7 +7,7 @@ const TOKEN_KEY = 'builder_token';
 const getClient = (): BuilderClient => {
   if (!instance) {
     const token = localStorage.getItem(TOKEN_KEY) ?? undefined;
-    instance = createBuilderClient({ baseUrl: '/api', token });
+    instance = createBuilderClient({ baseUrl: '', token });
   }
   return instance;
 };

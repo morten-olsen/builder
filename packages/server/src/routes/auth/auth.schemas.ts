@@ -25,21 +25,34 @@ const meResponseSchema = z.object({
   createdAt: z.string(),
 });
 
+const changePasswordBodySchema = z.object({
+  currentPassword: z.string(),
+  newPassword: z.string().min(8),
+});
+
+const successResponseSchema = z.object({
+  success: z.literal(true),
+});
+
 const errorResponseSchema = z.object({
   error: z.string(),
 });
 
 type RegisterBody = z.infer<typeof registerBodySchema>;
 type LoginBody = z.infer<typeof loginBodySchema>;
+type ChangePasswordBody = z.infer<typeof changePasswordBodySchema>;
 type AuthResponseData = z.infer<typeof authResponseSchema>;
 type MeResponseData = z.infer<typeof meResponseSchema>;
+type SuccessResponseData = z.infer<typeof successResponseSchema>;
 type ErrorResponseData = z.infer<typeof errorResponseSchema>;
 
-export type { RegisterBody, LoginBody, AuthResponseData, MeResponseData, ErrorResponseData };
+export type { RegisterBody, LoginBody, ChangePasswordBody, AuthResponseData, MeResponseData, SuccessResponseData, ErrorResponseData };
 export {
   registerBodySchema,
   loginBodySchema,
+  changePasswordBodySchema,
   authResponseSchema,
   meResponseSchema,
+  successResponseSchema,
   errorResponseSchema,
 };

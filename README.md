@@ -64,13 +64,15 @@ npm install -g @morten-olsen/builder-cli
 builder server start
 ```
 
-That's it. Builder creates a SQLite database and generates encryption keys in `~/.builder/` on first launch. The server is now running on `http://localhost:3000`.
+That's it. Builder creates a SQLite database and generates encryption keys in `~/.builder/` on first launch. The server is now running on `http://localhost:4120`.
 
 ### Set up your account
 
 ```sh
-builder auth register --email you@example.com --password yourpassword
+builder auth register --email you@example.com
 ```
+
+You'll be prompted for a password securely (masked input, not saved to shell history). You can also pass `--password <password>` directly for scripting.
 
 ### Create a Git identity
 
@@ -87,7 +89,7 @@ Copy the public key from the output and add it to [GitHub](https://github.com/se
 
 ### Open the dashboard
 
-Head to **<http://localhost:3000>** from your laptop — or your phone, we don't judge. Log in, register a repo, and kick off your first session. Then close the laptop. That's the whole point.
+Head to **<http://localhost:4120>** from your laptop — or your phone, we don't judge. Log in, register a repo, and kick off your first session. Then close the laptop. That's the whole point.
 
 ---
 
@@ -105,7 +107,7 @@ Builder works out of the box, but you can tune it with environment variables:
 | ------------------- | -------------------------- | ---------------------------------------------------- |
 | `ANTHROPIC_API_KEY` | from Claude Code           | Inherited automatically. Set explicitly to override. |
 | `AGENT_MODEL`       | `claude-sonnet-4-20250514` | Which Claude model the agent uses.                   |
-| `PORT`              | `3000`                     | Server port.                                         |
+| `PORT`              | `4120`                     | Server port.                                         |
 | `HOST`              | `0.0.0.0`                  | Server bind address.                                 |
 | `DB_PATH`           | `~/.builder/builder.db`    | SQLite database location.                            |
 | `SESSION_DATA_DIR`  | `~/.builder/data`          | Where repo clones and worktrees live.                |
@@ -121,8 +123,8 @@ Secrets are auto-generated on first run and stored in `~/.builder/secrets.json`.
 
 | Doc                             | What's in it                                                          |
 | ------------------------------- | --------------------------------------------------------------------- |
-| [CLI Reference](docs/cli.md)   | Every command, flag, and option                                       |
-| [API Guide](docs/api.md)       | Authentication, REST requests, SSE event streaming, TypeScript client |
+| [CLI Reference](docs/cli.md)    | Every command, flag, and option                                       |
+| [API Guide](docs/api.md)        | Authentication, REST requests, SSE event streaming, TypeScript client |
 | `/documentation` on your server | Interactive API explorer (Swagger UI)                                 |
 
 ---

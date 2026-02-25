@@ -4,7 +4,7 @@ export { configSchema, createConfig } from './config/config.js';
 export type { ServiceConstructor } from './container/container.js';
 export { Services, destroy } from './container/container.js';
 
-export type { DatabaseSchema, UsersTable, IdentitiesTable, SessionsTable, MessagesTable, SessionEventsTable, FileReviewsTable } from './services/database/database.js';
+export type { DatabaseSchema, UsersTable, IdentitiesTable, SessionsTable, MessagesTable, SessionEventsTable, FileReviewsTable, NotificationChannelsTable } from './services/database/database.js';
 export { DatabaseService } from './services/database/database.js';
 
 export type { AuthTokenPayload, AuthUser, AuthResponse } from './services/auth/auth.js';
@@ -14,6 +14,7 @@ export {
   InvalidCredentialsError,
   EmailAlreadyExistsError,
   InvalidTokenError,
+  UserNotFoundError,
 } from './services/auth/auth.errors.js';
 
 export type { Identity, CreateIdentityInput, UpdateIdentityInput } from './services/identity/identity.js';
@@ -34,15 +35,19 @@ export { registerIdentityRoutes } from './routes/identities/identities.js';
 export type {
   RegisterBody,
   LoginBody,
+  ChangePasswordBody,
   AuthResponseData,
   MeResponseData,
+  SuccessResponseData,
   ErrorResponseData,
 } from './routes/auth/auth.schemas.js';
 export {
   registerBodySchema,
   loginBodySchema,
+  changePasswordBodySchema,
   authResponseSchema,
   meResponseSchema,
+  successResponseSchema,
   errorResponseSchema,
 } from './routes/auth/auth.schemas.js';
 
@@ -125,6 +130,47 @@ export { registerEventRoutes } from './routes/events/events.js';
 
 export type { PersistedSessionEvent } from './services/session-event/session-event.js';
 export { SessionEventService } from './services/session-event/session-event.js';
+
+export type {
+  NotificationLevel,
+  Notification,
+  NotificationProvider,
+  NotificationChannel,
+  CreateChannelInput,
+  UpdateChannelInput,
+} from './services/notification/notification.js';
+export { NotificationService } from './services/notification/notification.js';
+export {
+  NotificationError,
+  NotificationChannelNotFoundError,
+  NotificationProviderNotFoundError,
+  NotificationForbiddenError,
+} from './services/notification/notification.errors.js';
+export { createNtfyProvider } from './services/notification/notification.ntfy.js';
+
+export { registerNotificationRoutes } from './routes/notifications/notifications.js';
+
+export type {
+  ChannelParams,
+  CreateChannelBody,
+  UpdateChannelBody,
+  ChannelResponseData,
+  ChannelListResponseData,
+  PreferencesResponseData,
+  UpdatePreferencesBody,
+  SessionNotificationBody,
+} from './routes/notifications/notifications.schemas.js';
+export {
+  channelParamsSchema,
+  createChannelBodySchema,
+  updateChannelBodySchema,
+  channelResponseSchema,
+  channelListResponseSchema,
+  providerListResponseSchema,
+  preferencesResponseSchema,
+  updatePreferencesBodySchema,
+  sessionNotificationBodySchema,
+} from './routes/notifications/notifications.schemas.js';
 
 export { registerRepoRoutes } from './routes/repos/repos.js';
 
