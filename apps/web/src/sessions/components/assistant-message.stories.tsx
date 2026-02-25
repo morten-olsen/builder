@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { AssistantMessage } from './assistant-message.js';
 
 const meta: Meta<typeof AssistantMessage> = {

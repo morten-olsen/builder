@@ -6,6 +6,7 @@ import type { AuthTokenPayload } from '../../services/auth/auth.js';
 import { DatabaseService } from '../../services/database/database.js';
 import { NotificationService } from '../../services/notification/notification.js';
 import { SessionService } from '../../services/session/session.js';
+import { sessionParamsSchema } from '../sessions/sessions.schemas.js';
 
 import {
   channelParamsSchema,
@@ -20,7 +21,6 @@ import {
   errorResponseSchema,
   successResponseSchema,
 } from './notifications.schemas.js';
-import { sessionParamsSchema } from '../sessions/sessions.schemas.js';
 
 const requireUser = (user: AuthTokenPayload | null, reply: FastifyReply): AuthTokenPayload => {
   if (!user) {

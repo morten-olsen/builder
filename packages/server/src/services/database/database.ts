@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
 import type { Generated } from 'kysely';
 import { Kysely, Migrator, SqliteDialect } from 'kysely';
 
@@ -39,6 +39,7 @@ type SessionsTable = {
   error: string | null;
   repo_id: string | null;
   notifications_enabled: number | null;
+  pinned_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -121,7 +122,7 @@ class DatabaseService {
   #initialize = async (): Promise<Kysely<DatabaseSchema>> => {
     const { config } = this.#services;
     const dialect = new SqliteDialect({
-      database: new Database(config.db.path),
+      database: new BetterSqlite3(config.db.path),
     });
 
     const db = new Kysely<DatabaseSchema>({ dialect });

@@ -1,6 +1,7 @@
 import { fastify } from 'fastify';
 import { fastifySwagger } from '@fastify/swagger';
 import { fastifySwaggerUi } from '@fastify/swagger-ui';
+import fastifyWebSocket from '@fastify/websocket';
 import {
   jsonSchemaTransform,
   serializerCompiler,
@@ -71,6 +72,8 @@ const createApp = async (input: CreateAppInput) => {
   await app.register(fastifySwaggerUi, {
     routePrefix: '/documentation',
   });
+
+  await app.register(fastifyWebSocket);
 
   app.decorate('services', input.services);
   app.decorate('config', input.config);

@@ -147,8 +147,8 @@ const ReviewPage = (): React.ReactNode => {
       modified={null}
       isReviewed={false}
       isStale={false}
-      onMarkReviewed={() => {}}
-      onUnmarkReviewed={() => {}}
+      onMarkReviewed={() => undefined}
+      onUnmarkReviewed={() => undefined}
       renderSideBySide={isDesktop}
     />
   );

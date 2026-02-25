@@ -74,7 +74,7 @@ const SessionDetailPage = (): React.ReactNode => {
 
   const s = session.data;
   const isRunning = s?.status === 'running';
-  const canInput = isRunning || s?.status === 'idle' || s?.status === 'waiting_for_input';
+  const canInput = isRunning || s?.status === 'idle' || s?.status === 'reverted' || s?.status === 'waiting_for_input' || s?.status === 'failed' || s?.status === 'completed';
 
   return (
     <div className="flex h-full flex-col">

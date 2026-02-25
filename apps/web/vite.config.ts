@@ -7,6 +7,10 @@ export default defineConfig({
   plugins: [TanStackRouterVite(), react(), tailwindcss()],
   server: {
     proxy: {
+      '/api/ws': {
+        target: 'ws://localhost:4120',
+        ws: true,
+      },
       '/api': {
         target: 'http://localhost:4120',
       },

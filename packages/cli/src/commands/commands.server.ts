@@ -23,7 +23,7 @@ const registerServerCommands = (program: Command): void => {
       await db
         .updateTable('sessions')
         .set({ status: 'failed', error: 'Server restarted', updated_at: new Date().toISOString() })
-        .where('status', 'in', ['running', 'idle'])
+        .where('status', 'in', ['running', 'cloning'])
         .execute();
 
       const app = await createApp({ services, config });

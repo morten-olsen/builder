@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
+
 import { Button } from './button.js';
 
 type ConfirmDialogProps = {
-  trigger: React.ReactNode;
+  trigger: React.ReactElement;
   title: string;
   description?: string;
   confirmLabel?: string;
@@ -28,7 +29,7 @@ const ConfirmDialog = ({
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger render={<span />}>{trigger}</Dialog.Trigger>
+      <Dialog.Trigger render={trigger} />
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px]" />
         <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border-base bg-surface-1 p-5 shadow-xl shadow-black/40">

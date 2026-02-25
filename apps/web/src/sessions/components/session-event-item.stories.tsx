@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import type { SessionEventEntry } from '../use-session-events.js';
+
 import { SessionEventItem } from './session-event-item.js';
 
 const meta: Meta<typeof SessionEventItem> = {

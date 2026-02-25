@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SessionInput } from './session-input.js';
+
 import { Button } from '../../components/ui/button.js';
+
+import { SessionInput } from './session-input.js';
 
 const meta: Meta<typeof SessionInput> = {
   title: 'Composite/SessionInput',

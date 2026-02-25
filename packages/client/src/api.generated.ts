@@ -934,6 +934,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
                         }[];
@@ -1003,6 +1004,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
                         }[];
@@ -1056,6 +1058,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
                         };
@@ -1125,6 +1128,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
                         };
@@ -1580,6 +1584,95 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{sessionId}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        pinned: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            userId: string;
+                            identityId: string;
+                            repoUrl: string;
+                            branch: string;
+                            prompt: string;
+                            status: string;
+                            error: string | null;
+                            repoId: string | null;
+                            pinnedAt: string | null;
+                            createdAt: string;
+                            updatedAt: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

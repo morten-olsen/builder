@@ -104,7 +104,7 @@ class EventBusService {
     };
   };
 
-  #mapToNotification = (event: SessionEvent, sessionId: string): { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' } | null => {
+  #mapToNotification = (event: SessionEvent, _sessionId: string): { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' } | null => {
     switch (event.type) {
       case 'session:completed':
         return { type: 'session:completed', title: 'Session completed', body: event.data.summary, level: 'info' };

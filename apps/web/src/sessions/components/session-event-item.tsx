@@ -1,6 +1,7 @@
 import type { SessionEventEntry } from '../use-session-events.js';
 import { Alert } from '../../components/ui/alert.js';
 import { Button } from '../../components/ui/button.js';
+
 import { AssistantMessage } from './assistant-message.js';
 import { ToolCall } from './tool-call.js';
 import { ToolResult } from './tool-result.js';
@@ -61,7 +62,7 @@ const SessionEventItem = ({ event, snapshotMessageId, onRevert, isReverting }: S
               onClick={() => onRevert(snapshotMessageId)}
               disabled={isReverting}
             >
-              {isReverting ? 'reverting...' : 'revert to before this run'}
+              {isReverting ? 'reverting...' : 'revert to here'}
             </Button>
           )}
         </Alert>

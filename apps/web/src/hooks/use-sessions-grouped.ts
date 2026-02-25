@@ -8,21 +8,28 @@ type Session = {
   branch: string;
   prompt: string;
   status: string;
+  repoId: string | null;
+  pinnedAt: string | null;
   createdAt: string;
 };
 
 type GroupedSessions = {
+  pinned: Session[];
   attention: Session[];
   running: Session[];
   pending: Session[];
   recent: Session[];
 };
 
-const attentionStatuses = new Set(['waiting_for_input', 'idle']);
+const attentionStatuses = new Set(['waiting_for_input', 'idle', 'reverted']);
 const activeStatuses = new Set(['running']);
 const pendingStatuses = new Set(['pending']);
 
-const useSessionsGrouped = (): { groups: GroupedSessions; isLoading: boolean } => {
+type UseSessionsGroupedOptions = {
+  filterRepoId?: string;
+};
+
+const useSessionsGrouped = (options?: UseSessionsGroupedOptions): { groups: GroupedSessions; isLoading: boolean } => {
   const sessions = useQuery({
     queryKey: ['sessions'],
     queryFn: async () => {
@@ -36,12 +43,25 @@ const useSessionsGrouped = (): { groups: GroupedSessions; isLoading: boolean } =
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
+  const pinned: Session[] = [];
   const attention: Session[] = [];
   const running: Session[] = [];
   const pending: Session[] = [];
   const recent: Session[] = [];
 
+  const filterRepoId = options?.filterRepoId;
+
   for (const s of sorted) {
+    if (s.pinnedAt) {
+      pinned.push(s);
+      continue;
+    }
+
+    // Non-pinned sessions respect repo filter
+    if (filterRepoId && s.repoId !== filterRepoId) {
+      continue;
+    }
+
     if (attentionStatuses.has(s.status)) {
       attention.push(s);
     } else if (activeStatuses.has(s.status)) {
@@ -53,8 +73,11 @@ const useSessionsGrouped = (): { groups: GroupedSessions; isLoading: boolean } =
     }
   }
 
+  // Sort pinned by pinnedAt desc
+  pinned.sort((a, b) => new Date(b.pinnedAt as string).getTime() - new Date(a.pinnedAt as string).getTime());
+
   return {
-    groups: { attention, running, pending, recent: recent.slice(0, 10) },
+    groups: { pinned, attention, running, pending, recent: recent.slice(0, 10) },
     isLoading: sessions.isLoading,
   };
 };

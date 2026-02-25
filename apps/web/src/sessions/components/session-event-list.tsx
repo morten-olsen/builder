@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 
 import type { SessionEventEntry } from '../use-session-events.js';
+
 import { SessionEventItem } from './session-event-item.js';
 import { SessionTurn, type TurnData } from './session-turn.js';
 
@@ -123,23 +124,46 @@ const SessionEventList = ({
         </div>
       )}
       <div className="space-y-2">
-        {groups.map((group) =>
-          group.type === 'completed' ? (
-            <SessionTurn
-              key={group.key}
-              turn={group.turn}
-              onRevert={onRevert}
-              isReverting={isReverting}
-            />
-          ) : (
+        {groups.map((group, idx) => {
+          if (group.type === 'completed') {
+            // To "revert to here" we need the snapshot from the *next* turn,
+            // which captures the state right before that turn started — i.e.
+            // the state at the end of *this* turn. Only show the button when
+            // a subsequent turn exists and has a snapshot.
+            const next = groups[idx + 1];
+            const revertMessageId =
+              next?.type === 'completed' ? next.turn.snapshotMessageId : undefined;
+
+            return (
+              <SessionTurn
+                key={group.key}
+                turn={{ ...group.turn, snapshotMessageId: revertMessageId }}
+                onRevert={onRevert}
+                isReverting={isReverting}
+              />
+            );
+          }
+
+          return (
             <div key={group.key} className="space-y-1">
               {group.events.map((event) => (
                 <SessionEventItem key={event.id} event={event} />
               ))}
             </div>
-          ),
-        )}
+          );
+        })}
       </div>
+      {status === 'running' && events.length > 0 && (
+        <div className="flex items-center gap-1.5 px-2 py-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-1.5 w-1.5 rounded-full bg-accent"
+              style={{ animation: `pulse-dot 1.4s ease-in-out ${i * 0.2}s infinite` }}
+            />
+          ))}
+        </div>
+      )}
       <div ref={endRef} />
     </div>
   );

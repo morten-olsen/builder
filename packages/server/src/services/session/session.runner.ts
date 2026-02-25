@@ -246,9 +246,24 @@ const sendSessionMessage = async (services: Services, sessionId: string, message
   if (provider.isRunning(sessionId)) {
     await provider.sendMessage({ sessionId, message });
   } else {
-    // Agent was interrupted or died — restart with the new message
     const cwd = worktreePath(services, sessionId);
-    runAgentLoop(services, sessionId, message, cwd, true).catch(() => undefined);
+
+    if (session.status === 'reverted') {
+      // After a revert the Claude-side conversation is out of sync.
+      // Start a fresh session but include prior message history as context
+      // so Claude understands what happened before the revert point.
+      const history = await messageService.listBySession(sessionId);
+      const contextLines = history.map(
+        (m) => `[${m.role}]: ${m.content}`,
+      );
+      const prompt = contextLines.length > 0
+        ? `Here is the conversation history from previous turns:\n\n${contextLines.join('\n\n')}\n\n---\n\nNew message from user:\n${message}`
+        : message;
+      runAgentLoop(services, sessionId, prompt, cwd, false).catch(() => undefined);
+    } else {
+      // Normal resume — agent was interrupted or session completed
+      runAgentLoop(services, sessionId, message, cwd, true).catch(() => undefined);
+    }
   }
 };
 
@@ -307,23 +322,55 @@ const revertSession = async (services: Services, sessionId: string, messageId: s
   const cwd = worktreePath(services, sessionId);
   await gitService.resetHard({ worktreePath: cwd, ref: message.commitSha });
 
-  // Find the max event sequence at or before the target message's creation time
+  // Find the snapshot event that references this message — it marks where the
+  // next turn begins. We use the stored event data rather than timestamps
+  // because event persistence is fire-and-forget (created_at is unreliable).
+  // The user:message event immediately before the snapshot is the first event
+  // of the next turn. We find the lowest sequence among the snapshot and any
+  // user:message event just before it, then keep everything before that.
   const db = await services.get(DatabaseService).getInstance();
-  const row = await db
+  const snapshotRow = await db
     .selectFrom('session_events')
-    .select(db.fn.max('sequence').as('max_seq'))
+    .select('sequence')
     .where('session_id', '=', sessionId)
-    .where('created_at', '<=', message.createdAt)
+    .where('type', '=', 'session:snapshot')
+    .where('data', 'like', `%${messageId}%`)
     .executeTakeFirst();
-  const afterSequence = (row?.max_seq as number | null) ?? 0;
 
-  await sessionEventService.deleteAfterSequence({ sessionId, afterSequence });
+  if (snapshotRow) {
+    // Find the user:message event that starts this turn — it's the last
+    // user:message at or before the snapshot's sequence.
+    const userMsgRow = await db
+      .selectFrom('session_events')
+      .select('sequence')
+      .where('session_id', '=', sessionId)
+      .where('type', '=', 'user:message')
+      .where('sequence', '<=', snapshotRow.sequence)
+      .orderBy('sequence', 'desc')
+      .limit(1)
+      .executeTakeFirst();
+
+    const firstEventOfNextTurn = userMsgRow?.sequence ?? snapshotRow.sequence;
+    await sessionEventService.deleteAfterSequence({
+      sessionId,
+      afterSequence: firstEventOfNextTurn - 1,
+    });
+  }
+
+  // Delete the target message and everything after it
   await messageService.deleteAfter({ sessionId, messageId });
+  await db
+    .deleteFrom('messages')
+    .where('id', '=', messageId)
+    .where('session_id', '=', sessionId)
+    .execute();
 
-  await sessionService.updateStatus({ sessionId, status: 'idle' });
+  // Use 'reverted' status so sendSessionMessage knows not to resume
+  // the Claude session (whose history is now out of sync).
+  await sessionService.updateStatus({ sessionId, status: 'reverted' });
   eventBus.emit(sessionId, {
     type: 'session:status',
-    data: { status: 'idle' },
+    data: { status: 'reverted' },
   });
 };
 

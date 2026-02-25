@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
 import { encrypt, decrypt } from '../../utils/crypto.js';
+
 import { IdentityError } from './identity.errors.js';
 
 const encryptPrivateKey = encrypt;

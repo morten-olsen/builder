@@ -15,6 +15,7 @@ type Session = {
   status: string;
   error: string | null;
   repoId: string | null;
+  pinnedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -44,6 +45,7 @@ const mapRow = (row: {
   status: string;
   error: string | null;
   repo_id: string | null;
+  pinned_at: string | null;
   created_at: string;
   updated_at: string;
 }): Session => ({
@@ -56,6 +58,7 @@ const mapRow = (row: {
   status: row.status,
   error: row.error,
   repoId: row.repo_id,
+  pinnedAt: row.pinned_at,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -103,6 +106,7 @@ class SessionService {
       status: 'pending',
       error: null,
       repoId: input.repoId ?? null,
+      pinnedAt: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -197,6 +201,30 @@ class SessionService {
       .execute();
 
     return rows.map(mapRow);
+  };
+
+  pin = async (input: { userId: string; sessionId: string }): Promise<void> => {
+    const db = await this.#database.getInstance();
+    const now = new Date().toISOString();
+
+    await db
+      .updateTable('sessions')
+      .set({ pinned_at: now, updated_at: now })
+      .where('id', '=', input.sessionId)
+      .where('user_id', '=', input.userId)
+      .execute();
+  };
+
+  unpin = async (input: { userId: string; sessionId: string }): Promise<void> => {
+    const db = await this.#database.getInstance();
+    const now = new Date().toISOString();
+
+    await db
+      .updateTable('sessions')
+      .set({ pinned_at: null, updated_at: now })
+      .where('id', '=', input.sessionId)
+      .where('user_id', '=', input.userId)
+      .execute();
   };
 
   delete = async (input: { userId: string; sessionId: string }): Promise<void> => {

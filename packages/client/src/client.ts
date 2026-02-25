@@ -1,7 +1,7 @@
 import createClient, { type Middleware } from 'openapi-fetch';
 
 import type { paths } from './api.generated.js';
-import type { SessionEvent, UserEvent } from './client.events.js';
+import type { SessionEvent, UserEvent, WsServerMessage, WsClientMessage } from './client.events.js';
 
 type ClientOptions = {
   baseUrl: string;
@@ -12,11 +12,28 @@ type SequencedSessionEvent = SessionEvent & { sequence?: number };
 
 type StreamEventsOptions = {
   afterSequence?: number;
+  signal?: AbortSignal;
+};
+
+type WebSocketCallbacks = {
+  onSessionEvent: (sessionId: string, event: SequencedSessionEvent) => void;
+  onUserEvent: (event: UserEvent) => void;
+  onSync: (sessionId: string, lastSequence: number) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onError?: (error: Event) => void;
+};
+
+type WebSocketConnection = {
+  subscribe: (sessionId: string, afterSequence?: number) => void;
+  unsubscribe: (sessionId: string) => void;
+  close: () => void;
 };
 
 type BuilderClient = {
   api: ReturnType<typeof createClient<paths>>;
   setToken: (token: string) => void;
+  connectWebSocket: (callbacks: WebSocketCallbacks) => WebSocketConnection;
   streamEvents: (
     sessionId: string,
     onEvent: (event: SequencedSessionEvent) => void,
@@ -48,6 +65,86 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
     token = newToken;
   };
 
+  const connectWebSocket = (callbacks: WebSocketCallbacks): WebSocketConnection => {
+    let wsUrl: string;
+
+    if (options.baseUrl && /^https?:\/\//.test(options.baseUrl)) {
+      const protocol = options.baseUrl.startsWith('https') ? 'wss' : 'ws';
+      const host = options.baseUrl.replace(/^https?:\/\//, '');
+      wsUrl = `${protocol}://${host}/api/ws`;
+    } else {
+      const loc = globalThis.location;
+      const protocol = loc.protocol === 'https:' ? 'wss' : 'ws';
+      wsUrl = `${protocol}://${loc.host}${options.baseUrl}/api/ws`;
+    }
+
+    const ws = new WebSocket(wsUrl);
+    let authenticated = false;
+
+    ws.addEventListener('open', () => {
+      ws.send(JSON.stringify({ type: 'auth', token }));
+    });
+
+    ws.addEventListener('message', (event) => {
+      try {
+        const message = JSON.parse(String(event.data)) as WsServerMessage;
+
+        if (message.kind === 'auth:ok') {
+          authenticated = true;
+          callbacks.onOpen?.();
+          return;
+        }
+
+        if (!authenticated) return;
+
+        switch (message.kind) {
+          case 'session:event':
+            callbacks.onSessionEvent(
+              message.sessionId,
+              { ...message.event, sequence: message.sequence } as SequencedSessionEvent,
+            );
+            break;
+          case 'user:event':
+            callbacks.onUserEvent(message.event);
+            break;
+          case 'sync':
+            callbacks.onSync(message.sessionId, message.lastSequence);
+            break;
+        }
+      } catch {
+        // Ignore malformed messages
+      }
+    });
+
+    ws.addEventListener('close', () => {
+      callbacks.onClose?.();
+    });
+
+    ws.addEventListener('error', (event) => {
+      callbacks.onError?.(event);
+    });
+
+    const sendMessage = (message: WsClientMessage): void => {
+      if (ws.readyState === WebSocket.OPEN && authenticated) {
+        ws.send(JSON.stringify(message));
+      }
+    };
+
+    const subscribe = (sessionId: string, afterSequence?: number): void => {
+      sendMessage({ type: 'subscribe', sessionId, afterSequence });
+    };
+
+    const unsubscribe = (sessionId: string): void => {
+      sendMessage({ type: 'unsubscribe', sessionId });
+    };
+
+    const close = (): void => {
+      ws.close();
+    };
+
+    return { subscribe, unsubscribe, close };
+  };
+
   const streamEvents = async (
     sessionId: string,
     onEvent: (event: SequencedSessionEvent) => void,
@@ -73,7 +170,7 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, { headers });
+    const response = await fetch(url, { headers, signal: streamOptions.signal });
     if (!response.ok) {
       throw new Error(`SSE request failed: ${response.status} ${response.statusText}`);
     }
@@ -87,38 +184,44 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
     const decoder = new TextDecoder();
     let buffer = '';
 
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
 
-      let eventType: string | undefined;
-      let eventId: string | undefined;
+        let eventType: string | undefined;
+        let eventId: string | undefined;
 
-      for (const line of lines) {
-        if (line.startsWith('id: ')) {
-          eventId = line.slice(4).trim();
-        } else if (line.startsWith('event: ')) {
-          eventType = line.slice(7).trim();
-        } else if (line.startsWith('data: ') && eventType) {
-          const data: unknown = JSON.parse(line.slice(6));
-          const sequence = eventId ? parseInt(eventId, 10) : undefined;
-          const event = { type: eventType, data, sequence } as SequencedSessionEvent;
-          onEvent(event);
-          if (untilFn?.(event)) {
-            reader.cancel();
-            return;
+        for (const line of lines) {
+          if (line.startsWith('id: ')) {
+            eventId = line.slice(4).trim();
+          } else if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ') && eventType) {
+            const data: unknown = JSON.parse(line.slice(6));
+            const sequence = eventId ? parseInt(eventId, 10) : undefined;
+            const event = { type: eventType, data, sequence } as SequencedSessionEvent;
+            onEvent(event);
+            if (untilFn?.(event)) {
+              return;
+            }
+            eventType = undefined;
+            eventId = undefined;
+          } else if (line === '') {
+            eventType = undefined;
+            eventId = undefined;
           }
-          eventType = undefined;
-          eventId = undefined;
-        } else if (line === '') {
-          eventType = undefined;
-          eventId = undefined;
         }
       }
+    } catch (error) {
+      if (streamOptions.signal?.aborted) return;
+      throw error;
+    } finally {
+      reader.cancel();
     }
   };
 
@@ -171,11 +274,22 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
     } catch (error) {
       if (streamOptions?.signal?.aborted) return;
       throw error;
+    } finally {
+      reader.cancel();
     }
   };
 
-  return { api, setToken, streamEvents, streamUserEvents };
+  return { api, setToken, connectWebSocket, streamEvents, streamUserEvents };
 };
 
-export type { ClientOptions, BuilderClient, SessionEvent, UserEvent, SequencedSessionEvent, StreamEventsOptions };
+export type {
+  ClientOptions,
+  BuilderClient,
+  SessionEvent,
+  UserEvent,
+  SequencedSessionEvent,
+  StreamEventsOptions,
+  WebSocketCallbacks,
+  WebSocketConnection,
+};
 export { createBuilderClient };
