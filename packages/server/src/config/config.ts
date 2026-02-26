@@ -82,7 +82,7 @@ const configSchema = convict({
     model: {
       doc: 'Model to use for the agent',
       format: String,
-      default: 'claude-sonnet-4-20250514',
+      default: 'sonnet',
       env: 'AGENT_MODEL',
     },
   },
