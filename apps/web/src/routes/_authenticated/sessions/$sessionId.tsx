@@ -8,6 +8,7 @@ import { StatusDot } from '../../../components/ui/status-dot.js';
 import { Badge } from '../../../components/ui/badge.js';
 import { Button } from '../../../components/ui/button.js';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog.js';
+import { Combobox } from '../../../components/ui/combobox.js';
 
 type StatusBadgeColor = 'accent' | 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 
@@ -131,6 +132,55 @@ const PinToggle = ({ sessionId, pinnedAt }: PinToggleProps): React.ReactNode => 
   );
 };
 
+type ModelSelectorProps = {
+  sessionId: string;
+  provider: string | null;
+  currentModel: string | null;
+};
+
+const ModelSelector = ({ sessionId, provider, currentModel }: ModelSelectorProps): React.ReactNode => {
+  const queryClient = useQueryClient();
+
+  const models = useQuery({
+    queryKey: ['models'],
+    queryFn: async () => {
+      const { data } = await getClient().api.GET('/api/models');
+      return data ?? [];
+    },
+  });
+
+  const filteredModels = provider
+    ? (models.data ?? []).filter((m) => m.provider === provider)
+    : (models.data ?? []);
+
+  const updateModel = useMutation({
+    mutationFn: async (model: string | null) => {
+      await getClient().api.PUT('/api/sessions/{sessionId}/model', {
+        params: { path: { sessionId } },
+        body: { model },
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['sessions', sessionId] });
+    },
+  });
+
+  return (
+    <div className="w-48">
+      <Combobox
+        options={filteredModels.map((m) => ({
+          value: m.id,
+          label: m.displayName,
+          description: `${m.provider}/${m.id}`,
+        }))}
+        value={currentModel ?? ''}
+        onValueChange={(v) => updateModel.mutate(v || null)}
+        placeholder="default model"
+      />
+    </div>
+  );
+};
+
 const tabs = [
   { to: '/sessions/$sessionId' as const, label: 'build', exact: true },
   { to: '/sessions/$sessionId/review' as const, label: 'review' },
@@ -223,6 +273,24 @@ const SessionLayout = (): React.ReactNode => {
             />
           </span>
         </div>
+        {s && (
+          <div className="mt-1.5 flex items-center gap-3">
+            {s.provider && (
+              <span className="flex items-center gap-1 font-mono text-ui text-text-muted">
+                <span className="text-text-dim">provider:</span>
+                <span className="text-text-base">{s.provider}</span>
+              </span>
+            )}
+            <span className="flex items-center gap-1 font-mono text-ui text-text-muted">
+              <span className="text-text-dim">model:</span>
+            </span>
+            <ModelSelector
+              sessionId={sessionId}
+              provider={s.provider}
+              currentModel={s.model}
+            />
+          </div>
+        )}
         {s?.prompt && (
           <p className="mt-1 truncate font-mono text-xs text-text-dim">{s.prompt}</p>
         )}

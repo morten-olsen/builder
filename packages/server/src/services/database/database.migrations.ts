@@ -185,6 +185,14 @@ const migrations: Record<string, Migration> = {
       await db.schema.dropTable('users').execute();
     },
   },
+  '002_add_provider_to_sessions': {
+    up: async (db) => {
+      await sql`ALTER TABLE sessions ADD COLUMN provider TEXT`.execute(db);
+    },
+    down: async (db) => {
+      await sql`ALTER TABLE sessions DROP COLUMN provider`.execute(db);
+    },
+  },
 };
 
 const migrationProvider: MigrationProvider = {

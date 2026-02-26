@@ -76,10 +76,12 @@ export type {
   AgentRunInput,
   AgentSendInput,
   AgentProvider,
+  AgentProviderModel,
 } from './services/agent/agent.js';
 export { AgentService } from './services/agent/agent.js';
 export { AgentError, AgentNotFoundError } from './services/agent/agent.errors.js';
 export { createClaudeAgentProvider } from './services/agent/agent.claude.js';
+export { createOpenCodeAgentProvider } from './services/agent/agent.opencode.js';
 
 export type { MessageQueue } from './services/agent/agent.queue.js';
 export { createMessageQueue } from './services/agent/agent.queue.js';
@@ -153,8 +155,8 @@ export { createNtfyProvider } from './services/notification/notification.ntfy.js
 
 export { registerModelRoutes } from './routes/models/models.js';
 
-export type { ModelResponseData, ModelListResponseData } from './routes/models/models.schemas.js';
-export { modelResponseSchema, modelListResponseSchema } from './routes/models/models.schemas.js';
+export type { ModelResponseData, ModelListResponseData, AgentProviderResponseData, AgentProviderListResponseData } from './routes/models/models.schemas.js';
+export { modelResponseSchema, modelListResponseSchema, agentProviderResponseSchema, agentProviderListResponseSchema } from './routes/models/models.schemas.js';
 
 export { registerNotificationRoutes } from './routes/notifications/notifications.js';
 

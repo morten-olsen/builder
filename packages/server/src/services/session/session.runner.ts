@@ -119,6 +119,7 @@ const runAgentLoop = async (
   cwd: string,
   resume?: boolean,
   model?: string,
+  providerName?: string,
 ): Promise<void> => {
   const sessionService = services.get(SessionService);
   const agentService = services.get(AgentService);
@@ -126,7 +127,7 @@ const runAgentLoop = async (
   const messageService = services.get(MessageService);
 
   const key = sessionKey(ref);
-  const provider = agentService.getProvider();
+  const provider = agentService.getProvider(providerName);
 
   await provider.run({
     sessionId: key,
@@ -228,7 +229,7 @@ const startSession = async (services: Services, ref: SessionRef): Promise<void> 
       });
     }
 
-    await runAgentLoop(services, ref, session.prompt, cwd, undefined, session.model ?? undefined);
+    await runAgentLoop(services, ref, session.prompt, cwd, undefined, session.model ?? undefined, session.provider ?? undefined);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     await sessionService.updateStatus({ ref, status: 'failed', error: errorMessage });
@@ -268,7 +269,7 @@ const sendSessionMessage = async (services: Services, ref: SessionRef, message: 
   });
 
   const key = sessionKey(ref);
-  const provider = agentService.getProvider();
+  const provider = agentService.getProvider(session.provider ?? undefined);
 
   if (provider.isRunning(key)) {
     await provider.sendMessage({ sessionId: key, message });
@@ -283,9 +284,9 @@ const sendSessionMessage = async (services: Services, ref: SessionRef, message: 
       const prompt = contextLines.length > 0
         ? `Here is the conversation history from previous turns:\n\n${contextLines.join('\n\n')}\n\n---\n\nNew message from user:\n${message}`
         : message;
-      runAgentLoop(services, ref, prompt, cwd, false, session.model ?? undefined).catch(() => undefined);
+      runAgentLoop(services, ref, prompt, cwd, false, session.model ?? undefined, session.provider ?? undefined).catch(() => undefined);
     } else {
-      runAgentLoop(services, ref, message, cwd, true, session.model ?? undefined).catch(() => undefined);
+      runAgentLoop(services, ref, message, cwd, true, session.model ?? undefined, session.provider ?? undefined).catch(() => undefined);
     }
   }
 };
@@ -295,8 +296,9 @@ const interruptSession = async (services: Services, ref: SessionRef): Promise<vo
   const agentService = services.get(AgentService);
   const eventBus = services.get(EventBusService);
 
+  const session = await sessionService.getByRef(ref);
   const key = sessionKey(ref);
-  const provider = agentService.getProvider();
+  const provider = agentService.getProvider(session.provider ?? undefined);
   await provider.abort(key);
 
   await sessionService.updateStatus({ ref, status: 'idle' });
@@ -311,8 +313,9 @@ const stopSession = async (services: Services, ref: SessionRef): Promise<void> =
   const agentService = services.get(AgentService);
   const eventBus = services.get(EventBusService);
 
+  const session = await sessionService.getByRef(ref);
   const key = sessionKey(ref);
-  const provider = agentService.getProvider();
+  const provider = agentService.getProvider(session.provider ?? undefined);
   await provider.stop(key);
 
   await sessionService.updateStatus({ ref, status: 'completed' });
@@ -336,8 +339,9 @@ const revertSession = async (services: Services, ref: SessionRef, messageId: str
   }
 
   // Abort the agent if running
+  const session = await sessionService.getByRef(ref);
   const key = sessionKey(ref);
-  const provider = agentService.getProvider();
+  const provider = agentService.getProvider(session.provider ?? undefined);
   try {
     await provider.abort(key);
   } catch {

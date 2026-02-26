@@ -18,6 +18,7 @@ import {
   sendMessageBodySchema,
   revertSessionBodySchema,
   pinSessionBodySchema,
+  updateModelBodySchema,
   messageListResponseSchema,
   sessionResponseSchema,
   sessionListResponseSchema,
@@ -75,6 +76,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
         branch,
         prompt: request.body.prompt,
         model: request.body.model,
+        provider: request.body.provider,
       });
 
       const ref = sessionRef(session);
@@ -148,7 +150,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
 
       const agentService = app.services.get(AgentService);
       try {
-        const provider = agentService.getProvider();
+        const provider = agentService.getProvider(session.provider ?? undefined);
         await provider.abort(key);
       } catch {
         // Provider may not exist or session may not be running
@@ -317,6 +319,36 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
       } else {
         await sessionService.unpin(ref);
       }
+
+      const updated = await sessionService.getByRef(ref);
+      reply.send(updated);
+    },
+  });
+
+  typedApp.put('/api/sessions/:sessionId/model', {
+    onRequest: [app.authenticate],
+    schema: {
+      params: sessionParamsSchema,
+      body: updateModelBodySchema,
+      response: {
+        200: sessionResponseSchema,
+        401: errorResponseSchema,
+        403: errorResponseSchema,
+        404: errorResponseSchema,
+      },
+      security: [{ bearerAuth: [] }],
+    },
+    handler: async (request, reply) => {
+      const user = requireUser(request.user, reply);
+      const sessionService = app.services.get(SessionService);
+
+      const session = await sessionService.get({
+        userId: user.sub,
+        sessionId: request.params.sessionId,
+      });
+      const ref = sessionRef(session);
+
+      await sessionService.updateModel(ref, request.body.model);
 
       const updated = await sessionService.getByRef(ref);
       reply.send(updated);

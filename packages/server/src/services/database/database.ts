@@ -39,6 +39,7 @@ type SessionsTable = {
   status: string;
   error: string | null;
   model: string | null;
+  provider: string | null;
   notifications_enabled: number | null;
   pinned_at: string | null;
   created_at: string;

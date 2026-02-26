@@ -255,7 +255,20 @@ Private keys are encrypted at rest using AES-256-GCM with a server-managed encry
 
 ## Agent Integration
 
-The agent service wraps the Claude Agent SDK, running **in-process** within the Fastify server:
+The agent service supports **multiple agent providers** via a provider registry. Each session can specify which provider to use (or fall back to the global default). Currently supported providers:
+
+- **Claude** (`claude`) — wraps the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript), running in-process
+- **OpenCode** (`opencode`) — wraps the [OpenCode SDK](https://opencode.ai/docs/sdk/), starting a local OpenCode server
+
+### Provider interface
+
+Providers implement the `AgentProvider` interface: `run`, `sendMessage`, `stop`, `abort`, `isRunning`, and optionally declare `models` (used by the `/api/models` endpoint).
+
+### Per-session provider selection
+
+Sessions have an optional `provider` column. When set, the session uses that provider; otherwise the global `AGENT_PROVIDER` config default is used. The API endpoints `GET /api/providers` and `GET /api/models` (with a `provider` field per model) allow clients to discover available providers and their models.
+
+### Lifecycle
 
 1. Initializes a headless agent session scoped to the worktree directory
 2. Pipes the user's initial prompt as the task description
@@ -264,9 +277,9 @@ The agent service wraps the Claude Agent SDK, running **in-process** within the 
 5. Resumes on receiving a user message via `POST /sessions/:id/messages`
 6. On completion, captures the final state and emits `session:completed`
 
-The agent wrapper is designed as a **provider interface**, so:
-- Alternative agent backends (other coding agents, custom loops) can be plugged in
-- Migration to child-process isolation can happen without changing the rest of the system
+The provider interface supports:
+- Plugging in new agent backends without modifying the rest of the system
+- Migration to child-process or container isolation per provider
 
 ## Data Storage
 
@@ -303,7 +316,6 @@ This keeps the database lean and conversation replay straightforward.
 
 ## Future Considerations
 
-- **Multiple agent backends**: swap Claude Agent SDK for other agents or custom loops
 - **Child process isolation**: move agent execution out-of-process for better isolation
 - **Container isolation**: run each agent in a sandboxed container
 - **Webhooks**: notify external systems on session events

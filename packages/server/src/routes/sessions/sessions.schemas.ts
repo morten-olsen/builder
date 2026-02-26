@@ -11,6 +11,7 @@ const createSessionBodySchema = z.object({
   branch: z.string().min(1).optional(),
   prompt: z.string().min(1),
   model: z.string().min(1).optional(),
+  provider: z.string().min(1).optional(),
 });
 
 const sendMessageBodySchema = z.object({
@@ -28,6 +29,7 @@ const sessionResponseSchema = z.object({
   status: z.string(),
   error: z.string().nullable(),
   model: z.string().nullable(),
+  provider: z.string().nullable(),
   pinnedAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -41,6 +43,10 @@ const revertSessionBodySchema = z.object({
 
 const pinSessionBodySchema = z.object({
   pinned: z.boolean(),
+});
+
+const updateModelBodySchema = z.object({
+  model: z.string().nullable(),
 });
 
 const messageResponseSchema = z.object({
@@ -65,6 +71,7 @@ type SessionResponseData = z.infer<typeof sessionResponseSchema>;
 type SessionListResponseData = z.infer<typeof sessionListResponseSchema>;
 type RevertSessionBody = z.infer<typeof revertSessionBodySchema>;
 type PinSessionBody = z.infer<typeof pinSessionBodySchema>;
+type UpdateModelBody = z.infer<typeof updateModelBodySchema>;
 type MessageResponseData = z.infer<typeof messageResponseSchema>;
 type MessageListResponseData = z.infer<typeof messageListResponseSchema>;
 
@@ -76,6 +83,7 @@ export type {
   SessionListResponseData,
   RevertSessionBody,
   PinSessionBody,
+  UpdateModelBody,
   MessageResponseData,
   MessageListResponseData,
 };
@@ -85,6 +93,7 @@ export {
   sendMessageBodySchema,
   revertSessionBodySchema,
   pinSessionBodySchema,
+  updateModelBodySchema,
   messageResponseSchema,
   messageListResponseSchema,
   sessionResponseSchema,

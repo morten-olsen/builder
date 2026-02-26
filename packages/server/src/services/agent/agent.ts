@@ -32,6 +32,11 @@ type AgentSendInput = {
   message: string;
 };
 
+type AgentProviderModel = {
+  id: string;
+  displayName: string;
+};
+
 type AgentProvider = {
   name: string;
   run: (input: AgentRunInput) => Promise<void>;
@@ -39,6 +44,7 @@ type AgentProvider = {
   stop: (sessionId: string) => Promise<void>;
   abort: (sessionId: string) => Promise<void>;
   isRunning: (sessionId: string) => boolean;
+  getModels?: () => Promise<AgentProviderModel[]>;
 };
 
 class AgentService {
@@ -53,13 +59,17 @@ class AgentService {
     this.#providers.set(provider.name, provider);
   };
 
-  getProvider = (): AgentProvider => {
-    const name = this.#services.config.agent.provider;
-    const provider = this.#providers.get(name);
+  getProvider = (name?: string): AgentProvider => {
+    const providerName = name ?? this.#services.config.agent.provider;
+    const provider = this.#providers.get(providerName);
     if (!provider) {
-      throw new AgentNotFoundError(name);
+      throw new AgentNotFoundError(providerName);
     }
     return provider;
+  };
+
+  getProviderNames = (): string[] => {
+    return [...this.#providers.keys()];
   };
 }
 
@@ -69,5 +79,6 @@ export type {
   AgentRunInput,
   AgentSendInput,
   AgentProvider,
+  AgentProviderModel,
 };
 export { AgentService };

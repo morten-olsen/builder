@@ -929,6 +929,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             model: string | null;
+                            provider: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1000,6 +1001,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             model: string | null;
+                            provider: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1036,6 +1038,7 @@ export interface paths {
                         branch?: string;
                         prompt: string;
                         model?: string;
+                        provider?: string;
                     };
                 };
             };
@@ -1057,6 +1060,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             model: string | null;
+                            provider: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1139,6 +1143,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             model: string | null;
+                            provider: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1643,6 +1648,98 @@ export interface paths {
                             status: string;
                             error: string | null;
                             model: string | null;
+                            provider: string | null;
+                            pinnedAt: string | null;
+                            createdAt: string;
+                            updatedAt: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{sessionId}/model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        model: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            userId: string;
+                            repoId: string;
+                            identityId: string;
+                            repoUrl: string;
+                            branch: string;
+                            prompt: string;
+                            status: string;
+                            error: string | null;
+                            model: string | null;
+                            provider: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -2160,7 +2257,56 @@ export interface paths {
                         "application/json": {
                             id: string;
                             displayName: string;
+                            provider: string;
                             createdAt: string;
+                        }[];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            name: string;
                         }[];
                     };
                 };

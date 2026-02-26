@@ -19,6 +19,7 @@
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.5",
     "@fastify/websocket": "^11.2.0",
+    "@opencode-ai/sdk": "^1.2.15",
     "better-sqlite3": "^12.6.2",
     "convict": "^6.2.4",
     "dotenv": "^17.3.1",

@@ -51,10 +51,11 @@ const registerSessionCommands = (program: Command): void => {
     .requiredOption('--repo <id>', 'Repo ID')
     .option('--identity <id>', 'Identity ID (overrides repo default)')
     .option('--branch <branch>', 'Branch name (overrides repo default)')
+    .option('--provider <provider>', 'Agent provider (e.g. claude, opencode)')
     .requiredOption('--prompt <prompt>', 'Prompt for the agent')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ id: string; repo: string; identity?: string; branch?: string; prompt: string }>();
+      const opts = this.opts<{ id: string; repo: string; identity?: string; branch?: string; provider?: string; prompt: string }>();
       const { services, cleanup } = await createCliContext();
       try {
         const { userId } = await requireAuth(services);
@@ -80,6 +81,7 @@ const registerSessionCommands = (program: Command): void => {
           repoUrl: repo.repoUrl,
           branch,
           prompt: opts.prompt,
+          provider: opts.provider,
         });
 
         if (isJson(this)) {
@@ -164,7 +166,7 @@ const registerSessionCommands = (program: Command): void => {
         const ref: SessionRef = sessionRef(s);
 
         const agentService = services.get(AgentService);
-        const provider = agentService.getProvider();
+        const provider = agentService.getProvider(s.provider ?? undefined);
         await provider.abort(sessionKey(ref));
 
         await sessionService.delete(ref);
@@ -185,10 +187,11 @@ const registerSessionCommands = (program: Command): void => {
     .requiredOption('--repo <id>', 'Repo ID')
     .option('--identity <id>', 'Identity ID (overrides repo default)')
     .option('--branch <branch>', 'Branch name (overrides repo default)')
+    .option('--provider <provider>', 'Agent provider (e.g. claude, opencode)')
     .requiredOption('--prompt <prompt>', 'Prompt for the agent')
     .option('--json', 'Output as newline-delimited JSON events')
     .action(async function (this: Command) {
-      const opts = this.opts<{ id: string; repo: string; identity?: string; branch?: string; prompt: string }>();
+      const opts = this.opts<{ id: string; repo: string; identity?: string; branch?: string; provider?: string; prompt: string }>();
       const json = isJson(this);
       const { services, cleanup } = await createCliContext();
       let exitCode = 0;
@@ -220,6 +223,7 @@ const registerSessionCommands = (program: Command): void => {
           repoUrl: repo.repoUrl,
           branch,
           prompt: opts.prompt,
+          provider: opts.provider,
         });
 
         ref = sessionRef(result);
@@ -247,11 +251,12 @@ const registerSessionCommands = (program: Command): void => {
         });
 
         const currentRef = ref;
+        const sessionProvider = opts.provider;
         const handleSignal = async (): Promise<void> => {
           if (!json) {
             console.log('\nAborting...');
           }
-          const provider = services.get(AgentService).getProvider();
+          const provider = services.get(AgentService).getProvider(sessionProvider);
           await provider.abort(sessionKey(currentRef));
           unsubscribe();
           await cleanup();

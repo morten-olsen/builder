@@ -20,6 +20,7 @@ type Session = {
   status: string;
   error: string | null;
   model: string | null;
+  provider: string | null;
   pinnedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -34,6 +35,7 @@ type CreateSessionInput = {
   branch: string;
   prompt: string;
   model?: string;
+  provider?: string;
 };
 
 type UpdateSessionStatusInput = {
@@ -62,6 +64,7 @@ const mapRow = (row: {
   status: string;
   error: string | null;
   model: string | null;
+  provider: string | null;
   pinned_at: string | null;
   created_at: string;
   updated_at: string;
@@ -76,6 +79,7 @@ const mapRow = (row: {
   status: row.status,
   error: row.error,
   model: row.model,
+  provider: row.provider,
   pinnedAt: row.pinned_at,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -110,6 +114,7 @@ class SessionService {
           status: 'pending',
           error: null,
           model: input.model ?? null,
+          provider: input.provider ?? null,
           created_at: now,
           updated_at: now,
         })
@@ -132,6 +137,7 @@ class SessionService {
       status: 'pending',
       error: null,
       model: input.model ?? null,
+      provider: input.provider ?? null,
       pinnedAt: null,
       createdAt: now,
       updatedAt: now,
@@ -240,6 +246,19 @@ class SessionService {
     await db
       .updateTable('sessions')
       .set({ pinned_at: now, updated_at: now })
+      .where('id', '=', ref.sessionId)
+      .where('repo_id', '=', ref.repoId)
+      .where('user_id', '=', ref.userId)
+      .execute();
+  };
+
+  updateModel = async (ref: SessionRef, model: string | null): Promise<void> => {
+    const db = await this.#database.getInstance();
+    const now = new Date().toISOString();
+
+    await db
+      .updateTable('sessions')
+      .set({ model: model ?? null, updated_at: now })
       .where('id', '=', ref.sessionId)
       .where('repo_id', '=', ref.repoId)
       .where('user_id', '=', ref.userId)

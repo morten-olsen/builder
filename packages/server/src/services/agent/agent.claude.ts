@@ -129,6 +129,11 @@ const createClaudeAgentProvider = (apiKey: string, model: string): AgentProvider
     stop,
     abort,
     isRunning,
+    getModels: async () => [
+      { id: 'sonnet', displayName: 'Sonnet' },
+      { id: 'opus', displayName: 'Opus' },
+      { id: 'haiku', displayName: 'Haiku' },
+    ],
   };
 };
 

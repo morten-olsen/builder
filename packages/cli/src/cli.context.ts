@@ -4,6 +4,7 @@ import {
   NotificationService,
   Services,
   createClaudeAgentProvider,
+  createOpenCodeAgentProvider,
   createConfig,
   createNtfyProvider,
   destroy,
@@ -21,6 +22,7 @@ const createCliContext = async (): Promise<CliContext> => {
 
   const agentService = services.get(AgentService);
   agentService.registerProvider(createClaudeAgentProvider(config.agent.apiKey, config.agent.model));
+  agentService.registerProvider(createOpenCodeAgentProvider());
 
   const notificationService = services.get(NotificationService);
   notificationService.registerProvider(createNtfyProvider());

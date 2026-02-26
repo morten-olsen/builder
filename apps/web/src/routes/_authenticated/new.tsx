@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button.js';
 import { Input, Textarea } from '../../components/ui/input.js';
 import { Label } from '../../components/ui/label.js';
 import { Select } from '../../components/ui/select.js';
+import { Combobox } from '../../components/ui/combobox.js';
 import { EmptyState } from '../../components/ui/empty-state.js';
 
 const NewSessionPage = (): React.ReactNode => {
@@ -16,12 +17,21 @@ const NewSessionPage = (): React.ReactNode => {
   const [repoId, setRepoId] = useState('');
   const [prompt, setPrompt] = useState('');
   const [branch, setBranch] = useState('');
+  const [provider, setProvider] = useState('');
   const [model, setModel] = useState('');
 
   const repos = useQuery({
     queryKey: ['repos'],
     queryFn: async () => {
       const { data } = await getClient().api.GET('/api/repos');
+      return data ?? [];
+    },
+  });
+
+  const providers = useQuery({
+    queryKey: ['providers'],
+    queryFn: async () => {
+      const { data } = await getClient().api.GET('/api/providers');
       return data ?? [];
     },
   });
@@ -36,6 +46,10 @@ const NewSessionPage = (): React.ReactNode => {
 
   const selectedRepo = repos.data?.find((r) => r.id === repoId);
 
+  const filteredModels = provider
+    ? (models.data ?? []).filter((m) => m.provider === provider)
+    : (models.data ?? []);
+
   const createSession = useMutation({
     mutationFn: async () => {
       const { data, error } = await getClient().api.POST('/api/sessions', {
@@ -44,6 +58,7 @@ const NewSessionPage = (): React.ReactNode => {
           repoId,
           prompt,
           ...(branch ? { branch } : {}),
+          ...(provider ? { provider } : {}),
           ...(model ? { model } : {}),
         },
       });
@@ -144,16 +159,33 @@ const NewSessionPage = (): React.ReactNode => {
         </div>
 
         <div className="mb-3">
-          <Label>Model (optional)</Label>
+          <Label>Provider (optional)</Label>
           <Select
-            options={models.data?.map((m) => ({
+            options={providers.data?.map((p) => ({
+              value: p.name,
+              label: p.name,
+              description: p.name,
+            })) ?? []}
+            value={provider}
+            onValueChange={(v) => {
+              setProvider(v);
+              setModel('');
+            }}
+            placeholder="server default"
+          />
+        </div>
+
+        <div className="mb-3">
+          <Label>Model (optional)</Label>
+          <Combobox
+            options={filteredModels.map((m) => ({
               value: m.id,
               label: m.displayName,
-              description: m.id,
-            })) ?? []}
+              description: `${m.provider}/${m.id}`,
+            }))}
             value={model}
             onValueChange={setModel}
-            placeholder="server default"
+            placeholder="search models..."
           />
         </div>
 
