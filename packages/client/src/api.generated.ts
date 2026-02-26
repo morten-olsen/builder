@@ -934,6 +934,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1004,6 +1005,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1038,6 +1040,7 @@ export interface paths {
                         identityId?: string;
                         branch?: string;
                         prompt: string;
+                        model?: string;
                     };
                 };
             };
@@ -1058,6 +1061,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1128,6 +1132,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -1631,6 +1636,7 @@ export interface paths {
                             status: string;
                             error: string | null;
                             repoId: string | null;
+                            model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
                             updatedAt: string;
@@ -2117,6 +2123,56 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            displayName: string;
+                            createdAt: string;
+                        }[];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

@@ -9,6 +9,7 @@ const createSessionBodySchema = z.object({
   identityId: z.string().min(1).optional(),
   branch: z.string().min(1).optional(),
   prompt: z.string().min(1),
+  model: z.string().min(1).optional(),
 });
 
 const sendMessageBodySchema = z.object({
@@ -25,6 +26,7 @@ const sessionResponseSchema = z.object({
   status: z.string(),
   error: z.string().nullable(),
   repoId: z.string().nullable(),
+  model: z.string().nullable(),
   pinnedAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),

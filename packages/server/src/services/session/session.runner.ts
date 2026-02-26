@@ -93,6 +93,7 @@ const runAgentLoop = async (
   prompt: string,
   cwd: string,
   resume?: boolean,
+  model?: string,
 ): Promise<void> => {
   const sessionService = services.get(SessionService);
   const agentService = services.get(AgentService);
@@ -106,6 +107,7 @@ const runAgentLoop = async (
     prompt,
     cwd,
     resume,
+    model,
     onEvent: async (event) => {
       mapAgentEvent(sessionId, event, eventBus);
 
@@ -202,7 +204,7 @@ const startSession = async (services: Services, sessionId: string): Promise<void
       });
     }
 
-    await runAgentLoop(services, sessionId, session.prompt, cwd);
+    await runAgentLoop(services, sessionId, session.prompt, cwd, undefined, session.model ?? undefined);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     await sessionService.updateStatus({ sessionId, status: 'failed', error: errorMessage });
@@ -259,10 +261,10 @@ const sendSessionMessage = async (services: Services, sessionId: string, message
       const prompt = contextLines.length > 0
         ? `Here is the conversation history from previous turns:\n\n${contextLines.join('\n\n')}\n\n---\n\nNew message from user:\n${message}`
         : message;
-      runAgentLoop(services, sessionId, prompt, cwd, false).catch(() => undefined);
+      runAgentLoop(services, sessionId, prompt, cwd, false, session.model ?? undefined).catch(() => undefined);
     } else {
       // Normal resume — agent was interrupted or session completed
-      runAgentLoop(services, sessionId, message, cwd, true).catch(() => undefined);
+      runAgentLoop(services, sessionId, message, cwd, true, session.model ?? undefined).catch(() => undefined);
     }
   }
 };

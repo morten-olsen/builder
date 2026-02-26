@@ -72,6 +72,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
         branch,
         prompt: request.body.prompt,
         repoId: repo.id,
+        model: request.body.model,
       });
 
       // Fire-and-forget — SSE is the feedback channel

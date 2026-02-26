@@ -148,6 +148,11 @@ export {
 } from './services/notification/notification.errors.js';
 export { createNtfyProvider } from './services/notification/notification.ntfy.js';
 
+export { registerModelRoutes } from './routes/models/models.js';
+
+export type { ModelResponseData, ModelListResponseData } from './routes/models/models.schemas.js';
+export { modelResponseSchema, modelListResponseSchema } from './routes/models/models.schemas.js';
+
 export { registerNotificationRoutes } from './routes/notifications/notifications.js';
 
 export type {

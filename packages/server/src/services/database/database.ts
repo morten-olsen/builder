@@ -38,6 +38,7 @@ type SessionsTable = {
   status: string;
   error: string | null;
   repo_id: string | null;
+  model: string | null;
   notifications_enabled: number | null;
   pinned_at: string | null;
   created_at: string;

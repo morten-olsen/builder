@@ -15,11 +15,20 @@ const NewSessionPage = (): React.ReactNode => {
   const [repoId, setRepoId] = useState('');
   const [prompt, setPrompt] = useState('');
   const [branch, setBranch] = useState('');
+  const [model, setModel] = useState('');
 
   const repos = useQuery({
     queryKey: ['repos'],
     queryFn: async () => {
       const { data } = await getClient().api.GET('/api/repos');
+      return data ?? [];
+    },
+  });
+
+  const models = useQuery({
+    queryKey: ['models'],
+    queryFn: async () => {
+      const { data } = await getClient().api.GET('/api/models');
       return data ?? [];
     },
   });
@@ -33,6 +42,7 @@ const NewSessionPage = (): React.ReactNode => {
           repoId,
           prompt,
           ...(branch ? { branch } : {}),
+          ...(model ? { model } : {}),
         },
       });
       if (error || !data) throw new Error(error?.error ?? 'Failed to create session');
@@ -116,6 +126,20 @@ const NewSessionPage = (): React.ReactNode => {
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
             placeholder={selectedRepo?.defaultBranch ?? 'main'}
+          />
+        </div>
+
+        <div className="mb-3">
+          <Label>Model (optional)</Label>
+          <Select
+            options={models.data?.map((m) => ({
+              value: m.id,
+              label: m.displayName,
+              description: m.id,
+            })) ?? []}
+            value={model}
+            onValueChange={setModel}
+            placeholder="server default"
           />
         </div>
 

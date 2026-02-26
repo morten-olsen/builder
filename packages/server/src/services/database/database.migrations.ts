@@ -306,6 +306,17 @@ const migrations: Record<string, Migration> = {
         .execute();
     },
   },
+  '013_add_model_to_sessions': {
+    up: async (db) => {
+      await sql`ALTER TABLE sessions ADD COLUMN model TEXT`.execute(db);
+    },
+    down: async (db) => {
+      await db.schema
+        .alterTable('sessions')
+        .dropColumn('model')
+        .execute();
+    },
+  },
 };
 
 const migrationProvider: MigrationProvider = {

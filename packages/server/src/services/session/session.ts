@@ -15,6 +15,7 @@ type Session = {
   status: string;
   error: string | null;
   repoId: string | null;
+  model: string | null;
   pinnedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -27,6 +28,7 @@ type CreateSessionInput = {
   branch: string;
   prompt: string;
   repoId?: string;
+  model?: string;
 };
 
 type UpdateSessionStatusInput = {
@@ -45,6 +47,7 @@ const mapRow = (row: {
   status: string;
   error: string | null;
   repo_id: string | null;
+  model: string | null;
   pinned_at: string | null;
   created_at: string;
   updated_at: string;
@@ -58,6 +61,7 @@ const mapRow = (row: {
   status: row.status,
   error: row.error,
   repoId: row.repo_id,
+  model: row.model,
   pinnedAt: row.pinned_at,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -91,6 +95,7 @@ class SessionService {
         status: 'pending',
         error: null,
         repo_id: input.repoId ?? null,
+        model: input.model ?? null,
         created_at: now,
         updated_at: now,
       })
@@ -106,6 +111,7 @@ class SessionService {
       status: 'pending',
       error: null,
       repoId: input.repoId ?? null,
+      model: input.model ?? null,
       pinnedAt: null,
       createdAt: now,
       updatedAt: now,

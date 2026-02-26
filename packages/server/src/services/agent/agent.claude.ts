@@ -43,7 +43,7 @@ const createClaudeAgentProvider = (apiKey: string, model: string): AgentProvider
         ...sessionOptions,
         cwd: input.cwd,
         abortController,
-        model,
+        model: input.model ?? model,
         permissionMode: 'acceptEdits',
         allowedTools: ['Edit', 'Write', 'Bash', 'Read', 'Glob', 'Grep'],
         env,

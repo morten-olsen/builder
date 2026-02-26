@@ -24,6 +24,7 @@ type AgentRunInput = {
   onEvent: (event: AgentEvent) => void | Promise<void>;
   abortSignal?: AbortSignal;
   resume?: boolean;
+  model?: string;
 };
 
 type AgentSendInput = {
