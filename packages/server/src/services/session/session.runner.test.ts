@@ -13,6 +13,7 @@ import { registerIdentityRoutes } from '../../routes/identities/identities.js';
 import { registerRepoRoutes } from '../../routes/repos/repos.js';
 import type { AgentProvider } from '../agent/agent.js';
 import { AgentService } from '../agent/agent.js';
+import { AuthService } from '../auth/auth.js';
 import type { SessionEvent } from '../../sse/event-bus.js';
 import { EventBusService } from '../../sse/event-bus.js';
 
@@ -91,6 +92,9 @@ describe('startSession', () => {
     const authBody = registerRes.json();
     userId = authBody.user.id;
     const token = authBody.token;
+
+    const worktreeBase = path.join(tmpDir, 'worktrees');
+    await services.get(AuthService).setWorktreeBase({ userId, worktreeBase });
 
     const identityRes = await app.inject({
       method: 'POST',

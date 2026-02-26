@@ -193,6 +193,53 @@ const migrations: Record<string, Migration> = {
       await sql`ALTER TABLE sessions DROP COLUMN provider`.execute(db);
     },
   },
+  '003_make_repo_url_nullable': {
+    up: async (db) => {
+      await sql`PRAGMA foreign_keys = OFF`.execute(db);
+      await sql`
+        CREATE TABLE repos_new (
+          id TEXT NOT NULL,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          repo_url TEXT,
+          default_branch TEXT,
+          default_identity_id TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+          PRIMARY KEY (id, user_id),
+          FOREIGN KEY (default_identity_id, user_id) REFERENCES identities(id, user_id) ON DELETE SET NULL
+        )
+      `.execute(db);
+      await sql`INSERT INTO repos_new SELECT * FROM repos`.execute(db);
+      await sql`DROP TABLE repos`.execute(db);
+      await sql`ALTER TABLE repos_new RENAME TO repos`.execute(db);
+      await sql`CREATE INDEX idx_repos_user_id ON repos(user_id)`.execute(db);
+      await sql`PRAGMA foreign_keys = ON`.execute(db);
+    },
+    down: async (db) => {
+      await sql`PRAGMA foreign_keys = OFF`.execute(db);
+      await sql`DELETE FROM repos WHERE repo_url IS NULL`.execute(db);
+      await sql`
+        CREATE TABLE repos_new (
+          id TEXT NOT NULL,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          repo_url TEXT NOT NULL,
+          default_branch TEXT,
+          default_identity_id TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+          PRIMARY KEY (id, user_id),
+          FOREIGN KEY (default_identity_id, user_id) REFERENCES identities(id, user_id) ON DELETE SET NULL
+        )
+      `.execute(db);
+      await sql`INSERT INTO repos_new SELECT * FROM repos`.execute(db);
+      await sql`DROP TABLE repos`.execute(db);
+      await sql`ALTER TABLE repos_new RENAME TO repos`.execute(db);
+      await sql`CREATE INDEX idx_repos_user_id ON repos(user_id)`.execute(db);
+      await sql`PRAGMA foreign_keys = ON`.execute(db);
+    },
+  },
 };
 
 const migrationProvider: MigrationProvider = {

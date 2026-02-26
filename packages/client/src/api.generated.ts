@@ -635,7 +635,7 @@ export interface paths {
                             id: string;
                             userId: string;
                             name: string;
-                            repoUrl: string;
+                            repoUrl: string | null;
                             defaultBranch: string | null;
                             defaultIdentityId: string | null;
                             createdAt: string;
@@ -669,7 +669,7 @@ export interface paths {
                     "application/json": {
                         id: string;
                         name: string;
-                        repoUrl: string;
+                        repoUrl?: string;
                         defaultBranch?: string;
                         defaultIdentityId?: string;
                     };
@@ -686,7 +686,7 @@ export interface paths {
                             id: string;
                             userId: string;
                             name: string;
-                            repoUrl: string;
+                            repoUrl: string | null;
                             defaultBranch: string | null;
                             defaultIdentityId: string | null;
                             createdAt: string;
@@ -752,7 +752,7 @@ export interface paths {
                             id: string;
                             userId: string;
                             name: string;
-                            repoUrl: string;
+                            repoUrl: string | null;
                             defaultBranch: string | null;
                             defaultIdentityId: string | null;
                             createdAt: string;
@@ -814,7 +814,7 @@ export interface paths {
                             id: string;
                             userId: string;
                             name: string;
-                            repoUrl: string;
+                            repoUrl: string | null;
                             defaultBranch: string | null;
                             defaultIdentityId: string | null;
                             createdAt: string;

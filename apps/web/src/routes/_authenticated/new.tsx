@@ -130,7 +130,7 @@ const NewSessionPage = (): React.ReactNode => {
             options={repos.data?.map((r) => ({
               value: r.id,
               label: r.name,
-              description: r.repoUrl,
+              description: r.repoUrl ?? undefined,
             })) ?? []}
             value={repoId}
             onValueChange={setRepoId}

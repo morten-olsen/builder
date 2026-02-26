@@ -141,7 +141,7 @@ const RepoDetailPage = (): React.ReactNode => {
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h2 className="font-mono text-base font-medium text-text-bright">{r.name}</h2>
-          <p className="mt-1 font-mono text-xs text-text-muted">{r.repoUrl}</p>
+          <p className="mt-1 font-mono text-xs text-text-muted">{r.repoUrl ?? 'no remote'}</p>
         </div>
         <ConfirmDialog
           trigger={

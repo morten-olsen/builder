@@ -62,6 +62,10 @@ const registerSessionCommands = (program: Command): void => {
         const repoService = services.get(RepoService);
         const repo = await repoService.get({ userId, repoId: opts.repo });
 
+        if (!repo.repoUrl) {
+          throw new Error('No repository URL configured for this repo');
+        }
+
         const identityId = opts.identity ?? repo.defaultIdentityId;
         if (!identityId) {
           throw new Error('No identity specified and repo has no default identity');
@@ -201,6 +205,10 @@ const registerSessionCommands = (program: Command): void => {
         const { userId } = await requireAuth(services);
         const repoService = services.get(RepoService);
         const repo = await repoService.get({ userId, repoId: opts.repo });
+
+        if (!repo.repoUrl) {
+          throw new Error('No repository URL configured for this repo');
+        }
 
         const identityId = opts.identity ?? repo.defaultIdentityId;
         if (!identityId) {

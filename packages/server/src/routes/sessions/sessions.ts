@@ -55,6 +55,11 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
         repoId: request.body.repoId,
       });
 
+      if (!repo.repoUrl) {
+        reply.code(400).send({ error: 'No repository URL configured for this repo' });
+        return;
+      }
+
       const identityId = request.body.identityId ?? repo.defaultIdentityId;
       if (!identityId) {
         reply.code(400).send({ error: 'No identity specified and repo has no default identity' });

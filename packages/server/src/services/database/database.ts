@@ -50,7 +50,7 @@ type ReposTable = {
   id: string;
   user_id: string;
   name: string;
-  repo_url: string;
+  repo_url: string | null;
   default_branch: string | null;
   default_identity_id: string | null;
   created_at: string;

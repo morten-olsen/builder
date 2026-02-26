@@ -48,7 +48,7 @@ const ReposPage = (): React.ReactNode => {
         body: {
           id,
           name,
-          repoUrl,
+          ...(repoUrl ? { repoUrl } : {}),
           ...(defaultBranch ? { defaultBranch } : {}),
           ...(defaultIdentityId ? { defaultIdentityId } : {}),
         },
@@ -117,10 +117,9 @@ const ReposPage = (): React.ReactNode => {
             <div>
               <Label>Repository URL</Label>
               <Input
-                required
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
-                placeholder="git@github.com:org/repo.git"
+                placeholder="git@github.com:org/repo.git (optional)"
               />
             </div>
             <div>
@@ -176,7 +175,7 @@ const ReposPage = (): React.ReactNode => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-mono text-sm font-medium text-text-bright">{repo.name}</p>
-                    <p className="mt-0.5 font-mono text-xs text-text-muted">{repo.repoUrl}</p>
+                    <p className="mt-0.5 font-mono text-xs text-text-muted">{repo.repoUrl ?? 'no remote'}</p>
                   </div>
                   <div className="text-right">
                     {repo.defaultBranch && (

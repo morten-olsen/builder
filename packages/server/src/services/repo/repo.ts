@@ -7,7 +7,7 @@ type Repo = {
   id: string;
   userId: string;
   name: string;
-  repoUrl: string;
+  repoUrl: string | null;
   defaultBranch: string | null;
   defaultIdentityId: string | null;
   createdAt: string;
@@ -18,7 +18,7 @@ type CreateRepoInput = {
   id: string;
   userId: string;
   name: string;
-  repoUrl: string;
+  repoUrl?: string;
   defaultBranch?: string;
   defaultIdentityId?: string;
 };
@@ -36,7 +36,7 @@ const mapRow = (row: {
   id: string;
   user_id: string;
   name: string;
-  repo_url: string;
+  repo_url: string | null;
   default_branch: string | null;
   default_identity_id: string | null;
   created_at: string;
@@ -73,7 +73,7 @@ class RepoService {
         id: input.id,
         user_id: input.userId,
         name: input.name,
-        repo_url: input.repoUrl,
+        repo_url: input.repoUrl ?? null,
         default_branch: input.defaultBranch ?? null,
         default_identity_id: input.defaultIdentityId ?? null,
         created_at: now,
@@ -85,7 +85,7 @@ class RepoService {
       id: input.id,
       userId: input.userId,
       name: input.name,
-      repoUrl: input.repoUrl,
+      repoUrl: input.repoUrl ?? null,
       defaultBranch: input.defaultBranch ?? null,
       defaultIdentityId: input.defaultIdentityId ?? null,
       createdAt: now,

@@ -13,12 +13,12 @@ const registerRepoCommands = (program: Command): void => {
     .description('Create a new repo')
     .requiredOption('--id <id>', 'Repo ID (lowercase slug)')
     .requiredOption('--name <name>', 'Repo name')
-    .requiredOption('--url <url>', 'Repository URL')
+    .option('--url <url>', 'Repository URL')
     .option('--branch <branch>', 'Default branch')
     .option('--identity <id>', 'Default identity ID')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ id: string; name: string; url: string; branch?: string; identity?: string }>();
+      const opts = this.opts<{ id: string; name: string; url?: string; branch?: string; identity?: string }>();
       const { services, cleanup } = await createCliContext();
       try {
         const { userId } = await requireAuth(services);
@@ -37,7 +37,7 @@ const registerRepoCommands = (program: Command): void => {
         } else {
           console.log(`Repo created: ${result.id}`);
           console.log(`  name:     ${result.name}`);
-          console.log(`  url:      ${result.repoUrl}`);
+          console.log(`  url:      ${result.repoUrl ?? 'none'}`);
           console.log(`  branch:   ${result.defaultBranch ?? 'none'}`);
           console.log(`  identity: ${result.defaultIdentityId ?? 'none'}`);
         }
@@ -90,7 +90,7 @@ const registerRepoCommands = (program: Command): void => {
         } else {
           console.log(`id:       ${result.id}`);
           console.log(`name:     ${result.name}`);
-          console.log(`url:      ${result.repoUrl}`);
+          console.log(`url:      ${result.repoUrl ?? 'none'}`);
           console.log(`branch:   ${result.defaultBranch ?? 'none'}`);
           console.log(`identity: ${result.defaultIdentityId ?? 'none'}`);
           console.log(`created:  ${result.createdAt}`);
@@ -130,7 +130,7 @@ const registerRepoCommands = (program: Command): void => {
         } else {
           console.log(`Repo updated: ${result.id}`);
           console.log(`  name:     ${result.name}`);
-          console.log(`  url:      ${result.repoUrl}`);
+          console.log(`  url:      ${result.repoUrl ?? 'none'}`);
           console.log(`  branch:   ${result.defaultBranch ?? 'none'}`);
           console.log(`  identity: ${result.defaultIdentityId ?? 'none'}`);
         }
