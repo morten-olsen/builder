@@ -41,6 +41,7 @@ const registerRepoRoutes = (app: FastifyInstance): void => {
     handler: async (request, reply) => {
       const user = requireUser(request.user, reply);
       const repo = await app.services.get(RepoService).create({
+        id: request.body.id,
         userId: user.sub,
         name: request.body.name,
         repoUrl: request.body.repoUrl,

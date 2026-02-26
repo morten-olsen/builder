@@ -4,7 +4,7 @@ import { createTestConfig } from '../../config/config.testing.js';
 import { Services, destroy } from '../../container/container.js';
 
 import { AuthService } from './auth.js';
-import { EmailAlreadyExistsError, InvalidCredentialsError, InvalidTokenError } from './auth.errors.js';
+import { UserAlreadyExistsError, InvalidCredentialsError, InvalidTokenError } from './auth.errors.js';
 
 describe('AuthService', () => {
   let services: Services;
@@ -20,49 +20,47 @@ describe('AuthService', () => {
   });
 
   it('registers a new user and returns a token', async () => {
-    const result = await auth.register({ email: 'alice@example.com', password: 'secret123' });
+    const result = await auth.register({ id: 'alice', password: 'secret123' });
 
     expect(result.token).toBeTruthy();
-    expect(result.user.email).toBe('alice@example.com');
-    expect(result.user.id).toBeTruthy();
+    expect(result.user.id).toBe('alice');
   });
 
-  it('rejects duplicate email on register', async () => {
-    await auth.register({ email: 'dup@example.com', password: 'pass1' });
+  it('rejects duplicate id on register', async () => {
+    await auth.register({ id: 'dup-user', password: 'pass1' });
 
     await expect(
-      auth.register({ email: 'dup@example.com', password: 'pass2' }),
-    ).rejects.toThrow(EmailAlreadyExistsError);
+      auth.register({ id: 'dup-user', password: 'pass2' }),
+    ).rejects.toThrow(UserAlreadyExistsError);
   });
 
   it('logs in with valid credentials', async () => {
-    await auth.register({ email: 'bob@example.com', password: 'mypass' });
-    const result = await auth.login({ email: 'bob@example.com', password: 'mypass' });
+    await auth.register({ id: 'bob', password: 'mypass' });
+    const result = await auth.login({ id: 'bob', password: 'mypass' });
 
     expect(result.token).toBeTruthy();
-    expect(result.user.email).toBe('bob@example.com');
+    expect(result.user.id).toBe('bob');
   });
 
   it('rejects login with wrong password', async () => {
-    await auth.register({ email: 'carol@example.com', password: 'correct' });
+    await auth.register({ id: 'carol', password: 'correct' });
 
     await expect(
-      auth.login({ email: 'carol@example.com', password: 'wrong' }),
+      auth.login({ id: 'carol', password: 'wrong' }),
     ).rejects.toThrow(InvalidCredentialsError);
   });
 
-  it('rejects login with non-existent email', async () => {
+  it('rejects login with non-existent id', async () => {
     await expect(
-      auth.login({ email: 'nobody@example.com', password: 'anything' }),
+      auth.login({ id: 'nobody', password: 'anything' }),
     ).rejects.toThrow(InvalidCredentialsError);
   });
 
   it('verifies a valid token', async () => {
-    const { token } = await auth.register({ email: 'dave@example.com', password: 'pass' });
+    const { token } = await auth.register({ id: 'dave', password: 'pass' });
     const payload = await auth.verifyToken(token);
 
-    expect(payload.email).toBe('dave@example.com');
-    expect(payload.sub).toBeTruthy();
+    expect(payload.sub).toBe('dave');
   });
 
   it('rejects an invalid token', async () => {
@@ -70,10 +68,9 @@ describe('AuthService', () => {
   });
 
   it('getMe returns user profile', async () => {
-    const { user } = await auth.register({ email: 'eve@example.com', password: 'pass' });
+    const { user } = await auth.register({ id: 'eve', password: 'pass' });
     const me = await auth.getMe(user.id);
 
-    expect(me.email).toBe('eve@example.com');
-    expect(me.id).toBe(user.id);
+    expect(me.id).toBe('eve');
   });
 });

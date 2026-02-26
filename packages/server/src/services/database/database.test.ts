@@ -36,7 +36,6 @@ describe('DatabaseService', () => {
       .insertInto('users')
       .values({
         id: 'user-1',
-        email: 'test@example.com',
         password_hash: 'hashed',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -49,15 +48,14 @@ describe('DatabaseService', () => {
       .execute();
 
     expect(users).toHaveLength(1);
-    expect(users[0].email).toBe('test@example.com');
+    expect(users[0].id).toBe('user-1');
   });
 
-  it('enforces unique email constraint', async () => {
+  it('enforces unique id constraint', async () => {
     const db = await dbService.getInstance();
 
     const user = {
       id: 'user-1',
-      email: 'dup@example.com',
       password_hash: 'hashed',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -66,7 +64,7 @@ describe('DatabaseService', () => {
     await db.insertInto('users').values(user).execute();
 
     await expect(
-      db.insertInto('users').values({ ...user, id: 'user-2' }).execute(),
+      db.insertInto('users').values(user).execute(),
     ).rejects.toThrow();
   });
 

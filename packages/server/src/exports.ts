@@ -12,7 +12,7 @@ export { AuthService } from './services/auth/auth.js';
 export {
   AuthError,
   InvalidCredentialsError,
-  EmailAlreadyExistsError,
+  UserAlreadyExistsError,
   InvalidTokenError,
   UserNotFoundError,
 } from './services/auth/auth.errors.js';
@@ -110,8 +110,8 @@ export {
   RepoForbiddenError,
 } from './services/repo/repo.errors.js';
 
-export type { Session, CreateSessionInput, UpdateSessionStatusInput } from './services/session/session.js';
-export { SessionService } from './services/session/session.js';
+export type { SessionRef, Session, CreateSessionInput, UpdateSessionStatusInput } from './services/session/session.js';
+export { sessionKey, sessionRef, SessionService } from './services/session/session.js';
 export {
   SessionError,
   SessionNotFoundError,

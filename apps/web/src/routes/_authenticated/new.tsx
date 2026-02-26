@@ -12,6 +12,7 @@ import { EmptyState } from '../../components/ui/empty-state.js';
 const NewSessionPage = (): React.ReactNode => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [id, setId] = useState('');
   const [repoId, setRepoId] = useState('');
   const [prompt, setPrompt] = useState('');
   const [branch, setBranch] = useState('');
@@ -39,6 +40,7 @@ const NewSessionPage = (): React.ReactNode => {
     mutationFn: async () => {
       const { data, error } = await getClient().api.POST('/api/sessions', {
         body: {
+          id,
           repoId,
           prompt,
           ...(branch ? { branch } : {}),
@@ -94,6 +96,18 @@ const NewSessionPage = (): React.ReactNode => {
         onSubmit={handleSubmit}
         className="mx-auto max-w-xl rounded-lg border border-border-base bg-surface-1 p-5"
       >
+        <div className="mb-3">
+          <Label>Session ID</Label>
+          <Input
+            required
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+            placeholder="fix-login-bug"
+            pattern="^[a-z0-9][a-z0-9._-]*$"
+            title="Lowercase slug (letters, numbers, dots, hyphens, underscores)"
+          />
+        </div>
+
         <div className="mb-3">
           <Label>Repository</Label>
           <Select

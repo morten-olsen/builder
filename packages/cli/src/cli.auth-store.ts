@@ -9,7 +9,6 @@ import { BUILDER_HOME } from './cli.defaults.js';
 type AuthData = {
   token: string;
   userId: string;
-  email: string;
 };
 
 const AUTH_FILE = path.join(BUILDER_HOME, 'auth.json');
@@ -36,7 +35,7 @@ const clearAuth = (): void => {
   }
 };
 
-const requireAuth = async (services: Services): Promise<{ userId: string; email: string }> => {
+const requireAuth = async (services: Services): Promise<{ userId: string }> => {
   const auth = loadAuth();
   if (!auth) {
     throw new Error('Not logged in. Run `builder auth login` or `builder auth register` first.');
@@ -45,7 +44,7 @@ const requireAuth = async (services: Services): Promise<{ userId: string; email:
   const authService = services.get(AuthService);
   const payload = await authService.verifyToken(auth.token);
 
-  return { userId: payload.sub, email: payload.email };
+  return { userId: payload.sub };
 };
 
 export type { AuthData };

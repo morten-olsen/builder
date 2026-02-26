@@ -1,13 +1,17 @@
+import os from 'node:os';
 import path from 'node:path';
 
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
 import type { AuthTokenPayload } from '../../services/auth/auth.js';
+import { AuthService } from '../../services/auth/auth.js';
 import { FileReviewService } from '../../services/file-review/file-review.js';
 import { GitService, repoHash } from '../../services/git/git.js';
 import { IdentityService } from '../../services/identity/identity.js';
-import { SessionService } from '../../services/session/session.js';
+import type { SessionRef } from '../../services/session/session.js';
+import { sessionRef, SessionService } from '../../services/session/session.js';
+import type { Services } from '../../container/container.js';
 
 import { sessionParamsSchema, errorResponseSchema } from './sessions.schemas.js';
 import {
@@ -27,6 +31,26 @@ const requireUser = (user: AuthTokenPayload | null, reply: FastifyReply): AuthTo
     throw new Error('Unauthorized');
   }
   return user;
+};
+
+const resolveWorktreePath = async (services: Services, ref: SessionRef, identityId: string): Promise<string> => {
+  const authService = services.get(AuthService);
+  const worktreeBase = await authService.getWorktreeBase(ref.userId);
+
+  if (worktreeBase) {
+    return path.join(worktreeBase, identityId, ref.repoId, ref.sessionId);
+  }
+
+  return path.join(
+    os.homedir(),
+    '.builder',
+    'users',
+    ref.userId,
+    'sessions',
+    identityId,
+    ref.repoId,
+    ref.sessionId,
+  );
 };
 
 const registerReviewRoutes = (app: FastifyInstance): void => {
@@ -50,24 +74,22 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
         userId: user.sub,
         sessionId: request.params.sessionId,
       });
+      const ref = sessionRef(session);
 
       const gitService = app.services.get(GitService);
       const fileReviewService = app.services.get(FileReviewService);
 
-      const worktreePath = path.join(app.config.session.dataDir, 'worktrees', session.id);
+      const wtPath = await resolveWorktreePath(app.services, ref, session.identityId);
       const baseRef = session.branch;
       const compareRef = request.query.compareRef;
 
       const changedFiles = await gitService.getChangedFiles({
-        worktreePath,
+        worktreePath: wtPath,
         baseRef,
         compareRef,
       });
 
-      const reviews = await fileReviewService.listBySession({
-        sessionId: session.id,
-        userId: user.sub,
-      });
+      const reviews = await fileReviewService.listBySession({ ref });
 
       const reviewMap = new Map(reviews.map((r) => [r.filePath, r]));
 
@@ -85,7 +107,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
             isReviewed = true;
             reviewedAt = review.createdAt;
             const currentHash = await gitService.getFileHash({
-              worktreePath,
+              worktreePath: wtPath,
               filePath: file.path,
             });
             if (currentHash && currentHash !== review.fileHash) {
@@ -139,14 +161,15 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
         userId: user.sub,
         sessionId: request.params.sessionId,
       });
+      const ref = sessionRef(session);
 
       const gitService = app.services.get(GitService);
-      const worktreePath = path.join(app.config.session.dataDir, 'worktrees', session.id);
+      const wtPath = await resolveWorktreePath(app.services, ref, session.identityId);
       const baseRef = session.branch;
       const filePath = request.query.path ?? null;
 
       const diff = await gitService.getDiff({
-        worktreePath,
+        worktreePath: wtPath,
         baseRef,
         compareRef: request.query.compareRef,
         filePath: filePath ?? undefined,
@@ -158,12 +181,12 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
       if (filePath) {
         [original, modified] = await Promise.all([
           gitService.getFileContent({
-            worktreePath,
+            worktreePath: wtPath,
             filePath,
             ref: baseRef,
           }),
           gitService.getFileContent({
-            worktreePath,
+            worktreePath: wtPath,
             filePath,
           }),
         ]);
@@ -232,19 +255,19 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
         userId: user.sub,
         sessionId: request.params.sessionId,
       });
+      const ref = sessionRef(session);
 
       const gitService = app.services.get(GitService);
       const fileReviewService = app.services.get(FileReviewService);
-      const worktreePath = path.join(app.config.session.dataDir, 'worktrees', session.id);
+      const wtPath = await resolveWorktreePath(app.services, ref, session.identityId);
 
       const fileHash = await gitService.getFileHash({
-        worktreePath,
+        worktreePath: wtPath,
         filePath: request.body.path,
       });
 
       const review = await fileReviewService.markReviewed({
-        sessionId: session.id,
-        userId: user.sub,
+        ref,
         filePath: request.body.path,
         fileHash: fileHash ?? '',
       });
@@ -280,10 +303,10 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
         userId: user.sub,
         sessionId: request.params.sessionId,
       });
+      const ref = sessionRef(session);
 
       await app.services.get(FileReviewService).unmarkReviewed({
-        sessionId: session.id,
-        userId: user.sub,
+        ref,
         filePath: request.body.path,
       });
 
@@ -309,17 +332,18 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
         userId: user.sub,
         sessionId: request.params.sessionId,
       });
+      const ref = sessionRef(session);
 
       const gitService = app.services.get(GitService);
       const identityService = app.services.get(IdentityService);
 
-      const worktreePath = path.join(app.config.session.dataDir, 'worktrees', session.id);
+      const wtPath = await resolveWorktreePath(app.services, ref, session.identityId);
       const targetBranch = request.body.branch;
 
       let committed = false;
       let commitHash: string | null = null;
 
-      const hasChanges = await gitService.hasUncommittedChanges({ worktreePath });
+      const hasChanges = await gitService.hasUncommittedChanges({ worktreePath: wtPath });
       if (hasChanges) {
         const identity = await identityService.get({
           userId: user.sub,
@@ -328,7 +352,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
 
         const message = request.body.commitMessage ?? `Session ${session.id} changes`;
         commitHash = await gitService.commit({
-          worktreePath,
+          worktreePath: wtPath,
           message,
           authorName: identity.gitAuthorName,
           authorEmail: identity.gitAuthorEmail,
@@ -342,7 +366,7 @@ const registerReviewRoutes = (app: FastifyInstance): void => {
       });
 
       await gitService.push({
-        worktreePath,
+        worktreePath: wtPath,
         branch: targetBranch,
         sshPrivateKey,
       });

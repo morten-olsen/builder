@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { Services } from '../../container/container.js';
+import type { SessionRef } from '../session/session.js';
 import { DatabaseService } from '../database/database.js';
 
 type FileReview = {
@@ -13,21 +14,18 @@ type FileReview = {
 };
 
 type MarkReviewedInput = {
-  sessionId: string;
-  userId: string;
+  ref: SessionRef;
   filePath: string;
   fileHash: string;
 };
 
 type UnmarkReviewedInput = {
-  sessionId: string;
-  userId: string;
+  ref: SessionRef;
   filePath: string;
 };
 
 type ListBySessionInput = {
-  sessionId: string;
-  userId: string;
+  ref: SessionRef;
 };
 
 const mapRow = (row: {
@@ -63,8 +61,9 @@ class FileReviewService {
     // Upsert via DELETE + INSERT
     await db
       .deleteFrom('file_reviews')
-      .where('session_id', '=', input.sessionId)
-      .where('user_id', '=', input.userId)
+      .where('session_id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .where('file_path', '=', input.filePath)
       .execute();
 
@@ -75,8 +74,9 @@ class FileReviewService {
       .insertInto('file_reviews')
       .values({
         id,
-        session_id: input.sessionId,
-        user_id: input.userId,
+        session_id: input.ref.sessionId,
+        repo_id: input.ref.repoId,
+        user_id: input.ref.userId,
         file_path: input.filePath,
         file_hash: input.fileHash,
         created_at: now,
@@ -85,8 +85,8 @@ class FileReviewService {
 
     return {
       id,
-      sessionId: input.sessionId,
-      userId: input.userId,
+      sessionId: input.ref.sessionId,
+      userId: input.ref.userId,
       filePath: input.filePath,
       fileHash: input.fileHash,
       createdAt: now,
@@ -98,8 +98,9 @@ class FileReviewService {
 
     await db
       .deleteFrom('file_reviews')
-      .where('session_id', '=', input.sessionId)
-      .where('user_id', '=', input.userId)
+      .where('session_id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .where('file_path', '=', input.filePath)
       .execute();
   };
@@ -110,8 +111,9 @@ class FileReviewService {
     const rows = await db
       .selectFrom('file_reviews')
       .selectAll()
-      .where('session_id', '=', input.sessionId)
-      .where('user_id', '=', input.userId)
+      .where('session_id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .execute();
 
     return rows.map(mapRow);

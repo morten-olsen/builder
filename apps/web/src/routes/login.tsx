@@ -16,7 +16,7 @@ const LoginPage = (): React.ReactNode => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
-  const [email, setEmail] = useState('');
+  const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,7 +26,7 @@ const LoginPage = (): React.ReactNode => {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login(email, password);
+      await login(id, password);
       await navigate({ to: redirect ?? '/dashboard' });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -55,14 +55,14 @@ const LoginPage = (): React.ReactNode => {
 
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="id">User ID</Label>
               <Input
-                id="email"
-                type="email"
+                id="id"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                placeholder="alice"
               />
             </div>
             <div>

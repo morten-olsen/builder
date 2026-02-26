@@ -4,6 +4,8 @@ import { destroy } from '../container/container.js';
 import type { Services } from '../container/container.js';
 import { DatabaseService } from '../services/database/database.js';
 import { NotificationService } from '../services/notification/notification.js';
+import type { SessionRef } from '../services/session/session.js';
+import { sessionKey } from '../services/session/session.js';
 import { SessionEventService } from '../services/session-event/session-event.js';
 
 type SessionEvent =
@@ -26,7 +28,7 @@ class EventBusService {
   #services: Services;
   #emitters = new Map<string, EventEmitter>();
   #userEmitters = new Map<string, EventEmitter>();
-  #sessionUsers = new Map<string, string>();
+  #sessionRefs = new Map<string, SessionRef>();
 
   constructor(services: Services) {
     this.#services = services;
@@ -36,11 +38,11 @@ class EventBusService {
     return this.#services.get(SessionEventService);
   }
 
-  #getOrCreate = (sessionId: string): EventEmitter => {
-    let emitter = this.#emitters.get(sessionId);
+  #getOrCreate = (key: string): EventEmitter => {
+    let emitter = this.#emitters.get(key);
     if (!emitter) {
       emitter = new EventEmitter();
-      this.#emitters.set(sessionId, emitter);
+      this.#emitters.set(key, emitter);
     }
     return emitter;
   };
@@ -54,42 +56,39 @@ class EventBusService {
     return emitter;
   };
 
-  registerSession = (sessionId: string, userId: string): void => {
-    this.#sessionUsers.set(sessionId, userId);
+  registerSession = (ref: SessionRef): void => {
+    const key = sessionKey(ref);
+    this.#sessionRefs.set(key, ref);
   };
 
-  emit = (sessionId: string, event: SessionEvent): void => {
+  emit = (ref: SessionRef, event: SessionEvent): void => {
+    const key = sessionKey(ref);
     const doEmit = async (): Promise<void> => {
-      const sequence = await this.#sessionEventService.nextSequence(sessionId);
-      const emitter = this.#getOrCreate(sessionId);
+      const sequence = await this.#sessionEventService.nextSequence(ref);
+      const emitter = this.#getOrCreate(key);
       emitter.emit('event', event, sequence);
-      this.#sessionEventService.persist(sessionId, sequence, event).catch(() => undefined);
+      this.#sessionEventService.persist(ref, sequence, event).catch(() => undefined);
 
       if (event.type === 'session:status') {
-        const userId = this.#sessionUsers.get(sessionId);
-        if (userId) {
-          const userEmitter = this.#getUserEmitter(userId);
-          userEmitter.emit('event', {
-            type: 'session:updated',
-            data: { sessionId, status: event.data.status },
-          } satisfies UserEvent);
-        }
+        const userEmitter = this.#getUserEmitter(ref.userId);
+        userEmitter.emit('event', {
+          type: 'session:updated',
+          data: { sessionId: ref.sessionId, status: event.data.status },
+        } satisfies UserEvent);
       }
 
       // Dispatch push notifications for significant events
-      const notificationEvent = this.#mapToNotification(event, sessionId);
+      const notificationEvent = this.#mapToNotification(event);
       if (notificationEvent) {
-        const userId = this.#sessionUsers.get(sessionId);
-        if (userId) {
-          this.#dispatchNotification(userId, sessionId, notificationEvent).catch(() => undefined);
-        }
+        this.#dispatchNotification(ref, notificationEvent).catch(() => undefined);
       }
     };
     doEmit().catch(() => undefined);
   };
 
-  subscribe = (sessionId: string, listener: SessionEventListener): (() => void) => {
-    const emitter = this.#getOrCreate(sessionId);
+  subscribe = (ref: SessionRef, listener: SessionEventListener): (() => void) => {
+    const key = sessionKey(ref);
+    const emitter = this.#getOrCreate(key);
     emitter.on('event', listener);
     return () => {
       emitter.off('event', listener);
@@ -104,7 +103,7 @@ class EventBusService {
     };
   };
 
-  #mapToNotification = (event: SessionEvent, _sessionId: string): { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' } | null => {
+  #mapToNotification = (event: SessionEvent): { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' } | null => {
     switch (event.type) {
       case 'session:completed':
         return { type: 'session:completed', title: 'Session completed', body: event.data.summary, level: 'info' };
@@ -117,9 +116,9 @@ class EventBusService {
     }
   };
 
-  #dispatchNotification = async (userId: string, sessionId: string, event: { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' }): Promise<void> => {
+  #dispatchNotification = async (ref: SessionRef, event: { type: string; title: string; body: string; level: 'info' | 'warning' | 'error' }): Promise<void> => {
     const notificationService = this.#services.get(NotificationService);
-    const prefs = await notificationService.getPreferences(userId);
+    const prefs = await notificationService.getPreferences(ref.userId);
 
     // Check global event-type filter
     if (!prefs.notificationEvents.includes(event.type)) return;
@@ -129,7 +128,9 @@ class EventBusService {
     const session = await db
       .selectFrom('sessions')
       .select('notifications_enabled')
-      .where('id', '=', sessionId)
+      .where('id', '=', ref.sessionId)
+      .where('repo_id', '=', ref.repoId)
+      .where('user_id', '=', ref.userId)
       .executeTakeFirst();
 
     const sessionOverride = session?.notifications_enabled;
@@ -139,22 +140,23 @@ class EventBusService {
 
     if (!enabled) return;
 
-    await notificationService.dispatch(userId, {
+    await notificationService.dispatch(ref.userId, {
       title: event.title,
       body: event.body,
       level: event.level,
-      sessionId,
+      sessionId: ref.sessionId,
     });
   };
 
-  remove = (sessionId: string): void => {
-    const emitter = this.#emitters.get(sessionId);
+  remove = (ref: SessionRef): void => {
+    const key = sessionKey(ref);
+    const emitter = this.#emitters.get(key);
     if (emitter) {
       emitter.removeAllListeners();
-      this.#emitters.delete(sessionId);
+      this.#emitters.delete(key);
     }
-    this.#sessionUsers.delete(sessionId);
-    this.#sessionEventService.remove(sessionId);
+    this.#sessionRefs.delete(key);
+    this.#sessionEventService.remove(ref);
   };
 
   [destroy] = async (): Promise<void> => {
@@ -166,7 +168,7 @@ class EventBusService {
       emitter.removeAllListeners();
     }
     this.#userEmitters.clear();
-    this.#sessionUsers.clear();
+    this.#sessionRefs.clear();
   };
 }
 

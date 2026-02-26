@@ -5,7 +5,6 @@ import { getClient, setToken as persistToken, clearToken, hasToken } from '../cl
 
 type User = {
   id: string;
-  email: string;
   createdAt: string;
 };
 
@@ -13,7 +12,7 @@ type AuthState = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (id: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -46,9 +45,9 @@ const AuthProvider = ({ children }: AuthProviderProps): ReactNode => {
     void validate();
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<void> => {
+  const login = useCallback(async (id: string, password: string): Promise<void> => {
     const { data, error } = await getClient().api.POST('/api/auth/login', {
-      body: { email, password },
+      body: { id, password },
     });
     if (error || !data) {
       throw new Error(error?.error ?? 'Login failed');

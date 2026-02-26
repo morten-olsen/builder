@@ -240,7 +240,7 @@ const registerNotificationRoutes = (app: FastifyInstance): void => {
       const sessionService = app.services.get(SessionService);
 
       // Verify ownership
-      await sessionService.get({ userId: user.sub, sessionId: request.params.sessionId });
+      const session = await sessionService.get({ userId: user.sub, sessionId: request.params.sessionId });
 
       const db = await app.services.get(DatabaseService).getInstance();
 
@@ -249,7 +249,9 @@ const registerNotificationRoutes = (app: FastifyInstance): void => {
       await db
         .updateTable('sessions')
         .set({ notifications_enabled: value === null ? null : value ? 1 : 0 })
-        .where('id', '=', request.params.sessionId)
+        .where('id', '=', session.id)
+        .where('repo_id', '=', session.repoId)
+        .where('user_id', '=', session.userId)
         .execute();
 
       reply.send({ success: true });

@@ -8,6 +8,8 @@ import { registerAuthRoutes } from '../auth/auth.js';
 
 import { registerIdentityRoutes } from './identities.js';
 
+let identityCounter = 0;
+
 describe('identity routes', () => {
   let services: Services;
   let app: Awaited<ReturnType<typeof createApp>>;
@@ -15,6 +17,7 @@ describe('identity routes', () => {
   let userId: string;
 
   beforeEach(async () => {
+    identityCounter = 0;
     const config = createTestConfig();
     services = new Services(config);
     app = await createApp({ services, config });
@@ -25,7 +28,7 @@ describe('identity routes', () => {
     const registerRes = await app.inject({
       method: 'POST',
       url: '/api/auth/register',
-      payload: { email: 'test@example.com', password: 'password123' },
+      payload: { id: 'test-user', password: 'password123' },
     });
     const body = registerRes.json();
     token = body.token;
@@ -39,12 +42,14 @@ describe('identity routes', () => {
 
   const authHeader = (): Record<string, string> => ({ authorization: `Bearer ${token}` });
 
-  const createIdentity = async (name = 'Test Identity'): Promise<Record<string, unknown>> => {
+  const createIdentity = async (name = 'test-identity'): Promise<Record<string, unknown>> => {
+    identityCounter++;
     const res = await app.inject({
       method: 'POST',
       url: `/api/users/${userId}/identities`,
       headers: authHeader(),
       payload: {
+        id: `identity-${identityCounter}`,
         name,
         gitAuthorName: 'Alice',
         gitAuthorEmail: 'alice@test.com',
@@ -60,6 +65,7 @@ describe('identity routes', () => {
         url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
+          id: 'work',
           name: 'Work',
           gitAuthorName: 'Alice',
           gitAuthorEmail: 'alice@work.com',
@@ -79,6 +85,7 @@ describe('identity routes', () => {
         url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
+          id: 'imported',
           name: 'Imported',
           gitAuthorName: 'Bob',
           gitAuthorEmail: 'bob@test.com',
@@ -99,6 +106,7 @@ describe('identity routes', () => {
         url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
+          id: 'derived',
           name: 'Derived',
           gitAuthorName: 'Carol',
           gitAuthorEmail: 'carol@test.com',
@@ -117,6 +125,7 @@ describe('identity routes', () => {
         url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
+          id: 'bad-key',
           name: 'Bad Key',
           gitAuthorName: 'Alice',
           gitAuthorEmail: 'alice@test.com',
@@ -134,6 +143,7 @@ describe('identity routes', () => {
         url: `/api/users/${userId}/identities`,
         headers: authHeader(),
         payload: {
+          id: 'bad',
           name: 'Bad',
           gitAuthorName: 'Alice',
           gitAuthorEmail: 'alice@test.com',
@@ -149,6 +159,7 @@ describe('identity routes', () => {
         method: 'POST',
         url: `/api/users/${userId}/identities`,
         payload: {
+          id: 'no-auth',
           name: 'No Auth',
           gitAuthorName: 'Alice',
           gitAuthorEmail: 'alice@test.com',
@@ -164,6 +175,7 @@ describe('identity routes', () => {
         url: '/api/users/other-user-id/identities',
         headers: authHeader(),
         payload: {
+          id: 'forbidden',
           name: 'Forbidden',
           gitAuthorName: 'Alice',
           gitAuthorEmail: 'alice@test.com',
@@ -176,8 +188,8 @@ describe('identity routes', () => {
 
   describe('GET /users/:userId/identities', () => {
     it('lists identities for a user', async () => {
-      await createIdentity('First');
-      await createIdentity('Second');
+      await createIdentity('first');
+      await createIdentity('second');
 
       const response = await app.inject({
         method: 'GET',
@@ -232,7 +244,7 @@ describe('identity routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.json().name).toBe('Test Identity');
+      expect(response.json().name).toBe('test-identity');
     });
 
     it('returns 404 for non-existent identity', async () => {

@@ -1,20 +1,24 @@
-import { randomUUID } from 'node:crypto';
-
 import type { Services } from '../../container/container.js';
 import { DatabaseService } from '../database/database.js';
 
 import { SessionNotFoundError } from './session.errors.js';
 
+type SessionRef = {
+  userId: string;
+  repoId: string;
+  sessionId: string;
+};
+
 type Session = {
   id: string;
   userId: string;
+  repoId: string;
   identityId: string;
   repoUrl: string;
   branch: string;
   prompt: string;
   status: string;
   error: string | null;
-  repoId: string | null;
   model: string | null;
   pinnedAt: string | null;
   createdAt: string;
@@ -22,31 +26,41 @@ type Session = {
 };
 
 type CreateSessionInput = {
+  id: string;
   userId: string;
+  repoId: string;
   identityId: string;
   repoUrl: string;
   branch: string;
   prompt: string;
-  repoId?: string;
   model?: string;
 };
 
 type UpdateSessionStatusInput = {
-  sessionId: string;
+  ref: SessionRef;
   status: string;
   error?: string;
 };
 
+const sessionKey = (ref: SessionRef): string =>
+  `${ref.userId}/${ref.repoId}/${ref.sessionId}`;
+
+const sessionRef = (session: Session): SessionRef => ({
+  userId: session.userId,
+  repoId: session.repoId,
+  sessionId: session.id,
+});
+
 const mapRow = (row: {
   id: string;
   user_id: string;
+  repo_id: string;
   identity_id: string;
   repo_url: string;
   branch: string;
   prompt: string;
   status: string;
   error: string | null;
-  repo_id: string | null;
   model: string | null;
   pinned_at: string | null;
   created_at: string;
@@ -54,13 +68,13 @@ const mapRow = (row: {
 }): Session => ({
   id: row.id,
   userId: row.user_id,
+  repoId: row.repo_id,
   identityId: row.identity_id,
   repoUrl: row.repo_url,
   branch: row.branch,
   prompt: row.prompt,
   status: row.status,
   error: row.error,
-  repoId: row.repo_id,
   model: row.model,
   pinnedAt: row.pinned_at,
   createdAt: row.created_at,
@@ -80,21 +94,20 @@ class SessionService {
 
   create = async (input: CreateSessionInput): Promise<Session> => {
     const db = await this.#database.getInstance();
-    const id = randomUUID();
     const now = new Date().toISOString();
 
     await db
       .insertInto('sessions')
       .values({
-        id,
+        id: input.id,
         user_id: input.userId,
+        repo_id: input.repoId,
         identity_id: input.identityId,
         repo_url: input.repoUrl,
         branch: input.branch,
         prompt: input.prompt,
         status: 'pending',
         error: null,
-        repo_id: input.repoId ?? null,
         model: input.model ?? null,
         created_at: now,
         updated_at: now,
@@ -102,15 +115,15 @@ class SessionService {
       .execute();
 
     return {
-      id,
+      id: input.id,
       userId: input.userId,
+      repoId: input.repoId,
       identityId: input.identityId,
       repoUrl: input.repoUrl,
       branch: input.branch,
       prompt: input.prompt,
       status: 'pending',
       error: null,
-      repoId: input.repoId ?? null,
       model: input.model ?? null,
       pinnedAt: null,
       createdAt: now,
@@ -148,13 +161,15 @@ class SessionService {
     return mapRow(row);
   };
 
-  getById = async (sessionId: string): Promise<Session> => {
+  getByRef = async (ref: SessionRef): Promise<Session> => {
     const db = await this.#database.getInstance();
 
     const row = await db
       .selectFrom('sessions')
       .selectAll()
-      .where('id', '=', sessionId)
+      .where('id', '=', ref.sessionId)
+      .where('repo_id', '=', ref.repoId)
+      .where('user_id', '=', ref.userId)
       .executeTakeFirst();
 
     if (!row) {
@@ -175,7 +190,9 @@ class SessionService {
         error: input.error ?? null,
         updated_at: now,
       })
-      .where('id', '=', input.sessionId)
+      .where('id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .execute();
   };
 
@@ -209,37 +226,40 @@ class SessionService {
     return rows.map(mapRow);
   };
 
-  pin = async (input: { userId: string; sessionId: string }): Promise<void> => {
+  pin = async (ref: SessionRef): Promise<void> => {
     const db = await this.#database.getInstance();
     const now = new Date().toISOString();
 
     await db
       .updateTable('sessions')
       .set({ pinned_at: now, updated_at: now })
-      .where('id', '=', input.sessionId)
-      .where('user_id', '=', input.userId)
+      .where('id', '=', ref.sessionId)
+      .where('repo_id', '=', ref.repoId)
+      .where('user_id', '=', ref.userId)
       .execute();
   };
 
-  unpin = async (input: { userId: string; sessionId: string }): Promise<void> => {
+  unpin = async (ref: SessionRef): Promise<void> => {
     const db = await this.#database.getInstance();
     const now = new Date().toISOString();
 
     await db
       .updateTable('sessions')
       .set({ pinned_at: null, updated_at: now })
-      .where('id', '=', input.sessionId)
-      .where('user_id', '=', input.userId)
+      .where('id', '=', ref.sessionId)
+      .where('repo_id', '=', ref.repoId)
+      .where('user_id', '=', ref.userId)
       .execute();
   };
 
-  delete = async (input: { userId: string; sessionId: string }): Promise<void> => {
+  delete = async (ref: SessionRef): Promise<void> => {
     const db = await this.#database.getInstance();
 
     const result = await db
       .deleteFrom('sessions')
-      .where('id', '=', input.sessionId)
-      .where('user_id', '=', input.userId)
+      .where('id', '=', ref.sessionId)
+      .where('repo_id', '=', ref.repoId)
+      .where('user_id', '=', ref.userId)
       .executeTakeFirst();
 
     if (result.numDeletedRows === 0n) {
@@ -248,5 +268,5 @@ class SessionService {
   };
 }
 
-export type { Session, CreateSessionInput, UpdateSessionStatusInput };
-export { SessionService };
+export type { SessionRef, Session, CreateSessionInput, UpdateSessionStatusInput };
+export { sessionKey, sessionRef, SessionService };

@@ -8,8 +8,8 @@ import { migrationProvider } from './database.migrations.js';
 
 type UsersTable = {
   id: string;
-  email: string;
   password_hash: string;
+  worktree_base: string | null;
   notifications_enabled: Generated<number>;
   notification_events: Generated<string>;
   created_at: string;
@@ -31,13 +31,13 @@ type IdentitiesTable = {
 type SessionsTable = {
   id: string;
   user_id: string;
+  repo_id: string;
   identity_id: string;
   repo_url: string;
   branch: string;
   prompt: string;
   status: string;
   error: string | null;
-  repo_id: string | null;
   model: string | null;
   notifications_enabled: number | null;
   pinned_at: string | null;
@@ -59,6 +59,8 @@ type ReposTable = {
 type MessagesTable = {
   id: string;
   session_id: string;
+  repo_id: string;
+  user_id: string;
   role: string;
   content: string;
   commit_sha: string | null;
@@ -68,6 +70,8 @@ type MessagesTable = {
 type SessionEventsTable = {
   id: string;
   session_id: string;
+  repo_id: string;
+  user_id: string;
   sequence: number;
   type: string;
   data: string;
@@ -77,6 +81,7 @@ type SessionEventsTable = {
 type FileReviewsTable = {
   id: string;
   session_id: string;
+  repo_id: string;
   user_id: string;
   file_path: string;
   file_hash: string;

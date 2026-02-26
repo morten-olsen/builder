@@ -10,12 +10,14 @@ import { createTestConfig } from '../../config/config.testing.js';
 import { Services, destroy } from '../../container/container.js';
 import { registerAuthRoutes } from '../../routes/auth/auth.js';
 import { registerIdentityRoutes } from '../../routes/identities/identities.js';
+import { registerRepoRoutes } from '../../routes/repos/repos.js';
 import type { AgentProvider } from '../agent/agent.js';
 import { AgentService } from '../agent/agent.js';
 import type { SessionEvent } from '../../sse/event-bus.js';
 import { EventBusService } from '../../sse/event-bus.js';
 
-import { SessionService } from './session.js';
+import type { SessionRef } from './session.js';
+import { sessionRef, SessionService } from './session.js';
 import { startSession } from './session.runner.js';
 
 const createMockAgentProvider = (): AgentProvider => ({
@@ -42,6 +44,7 @@ describe('startSession', () => {
   let tmpDir: string;
   let userId: string;
   let identityId: string;
+  let repoId: string;
   let originRepoPath: string;
 
   beforeEach(async () => {
@@ -73,31 +76,48 @@ describe('startSession', () => {
     const agentService = services.get(AgentService);
     agentService.registerProvider(createMockAgentProvider());
 
-    // Bootstrap user + identity
+    // Bootstrap user + identity + repo via API
     const app = await createApp({ services, config });
     registerAuthRoutes(app);
     registerIdentityRoutes(app);
+    registerRepoRoutes(app);
     await app.ready();
 
     const registerRes = await app.inject({
       method: 'POST',
       url: '/api/auth/register',
-      payload: { email: 'test@example.com', password: 'password123' },
+      payload: { id: 'test-user', password: 'password123' },
     });
     const authBody = registerRes.json();
     userId = authBody.user.id;
+    const token = authBody.token;
 
     const identityRes = await app.inject({
       method: 'POST',
       url: `/api/users/${userId}/identities`,
-      headers: { authorization: `Bearer ${authBody.token}` },
+      headers: { authorization: `Bearer ${token}` },
       payload: {
+        id: 'test-identity',
         name: 'Test Identity',
         gitAuthorName: 'Test',
         gitAuthorEmail: 'test@test.com',
       },
     });
     identityId = identityRes.json().id;
+
+    const repoRes = await app.inject({
+      method: 'POST',
+      url: '/api/repos',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        id: 'test-repo',
+        name: 'Test Repo',
+        repoUrl: `file://${originRepoPath}`,
+        defaultBranch: 'main',
+        defaultIdentityId: identityId,
+      },
+    });
+    repoId = repoRes.json().id;
 
     await app.close();
   });
@@ -114,19 +134,22 @@ describe('startSession', () => {
     const eventBus = services.get(EventBusService);
 
     const session = await sessionService.create({
+      id: 'fix-bug',
       userId,
+      repoId,
       identityId,
       repoUrl: `file://${originRepoPath}`,
       branch: 'main',
       prompt: 'Fix the bug',
     });
 
+    const ref: SessionRef = sessionRef(session);
     const events: SessionEvent[] = [];
-    eventBus.subscribe(session.id, (event) => events.push(event));
+    eventBus.subscribe(ref, (event) => events.push(event));
 
-    await startSession(services, session.id);
+    await startSession(services, ref);
 
-    const updated = await sessionService.getById(session.id);
+    const updated = await sessionService.getByRef(ref);
     expect(updated.status).toBe('idle');
 
     const statusEvents = events.filter((e) => e.type === 'session:status');
@@ -156,16 +179,19 @@ describe('startSession', () => {
 
     const sessionService = services.get(SessionService);
     const session = await sessionService.create({
+      id: 'break-things',
       userId,
+      repoId,
       identityId,
       repoUrl: `file://${originRepoPath}`,
       branch: 'main',
       prompt: 'Break things',
     });
 
-    await startSession(services, session.id);
+    const ref: SessionRef = sessionRef(session);
+    await startSession(services, ref);
 
-    const updated = await sessionService.getById(session.id);
+    const updated = await sessionService.getByRef(ref);
     expect(updated.status).toBe('failed');
     expect(updated.error).toBe('Something broke');
   });

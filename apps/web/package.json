@@ -11,6 +11,16 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
+  "files": [
+    "dist",
+    "exports.mjs",
+    "exports.d.mts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/morten-olsen/builder.git",
+    "directory": "packages/cli"
+  },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
     "@monaco-editor/react": "^4.7.0",

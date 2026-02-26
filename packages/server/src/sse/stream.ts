@@ -1,12 +1,13 @@
 import type { FastifyReply } from 'fastify';
 
+import type { SessionRef } from '../services/session/session.js';
 import type { SessionEventService } from '../services/session-event/session-event.js';
 
 import type { EventBusService, SessionEvent, UserEvent } from './event-bus.js';
 
 type StreamSessionEventsInput = {
   reply: FastifyReply;
-  sessionId: string;
+  ref: SessionRef;
   eventBus: EventBusService;
   sessionEventService: SessionEventService;
   afterSequence?: number;
@@ -23,7 +24,7 @@ const writeEvent = (reply: FastifyReply, event: SessionEvent, sequence: number):
 };
 
 const streamSessionEvents = async (input: StreamSessionEventsInput): Promise<void> => {
-  const { reply, sessionId, eventBus, sessionEventService, afterSequence } = input;
+  const { reply, ref, eventBus, sessionEventService, afterSequence } = input;
 
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -35,7 +36,7 @@ const streamSessionEvents = async (input: StreamSessionEventsInput): Promise<voi
   const buffer: { event: SessionEvent; sequence: number }[] = [];
   let replayed = false;
 
-  const unsubscribe = eventBus.subscribe(sessionId, (event, sequence) => {
+  const unsubscribe = eventBus.subscribe(ref, (event, sequence) => {
     if (replayed) {
       writeEvent(reply, event, sequence);
     } else {
@@ -49,7 +50,7 @@ const streamSessionEvents = async (input: StreamSessionEventsInput): Promise<voi
 
   // 2. Replay historical events from DB
   const historical = await sessionEventService.listBySession({
-    sessionId,
+    ref,
     afterSequence,
   });
 

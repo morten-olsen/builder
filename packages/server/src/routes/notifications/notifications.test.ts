@@ -29,7 +29,7 @@ describe('notification routes', () => {
     const regRes = await app.inject({
       method: 'POST',
       url: '/api/auth/register',
-      payload: { email: 'test@example.com', password: 'password123' },
+      payload: { id: 'test-user', password: 'password123' },
     });
     token = JSON.parse(regRes.body).token;
   });

@@ -28,36 +28,36 @@ describe('auth routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'test@example.com', password: 'password123' },
+        payload: { id: 'alice', password: 'password123' },
       });
 
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(body.token).toBeTruthy();
-      expect(body.user.email).toBe('test@example.com');
+      expect(body.user.id).toBe('alice');
     });
 
-    it('returns 409 for duplicate email', async () => {
+    it('returns 409 for duplicate id', async () => {
       await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'dup@example.com', password: 'password123' },
+        payload: { id: 'dup-user', password: 'password123' },
       });
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'dup@example.com', password: 'password456' },
+        payload: { id: 'dup-user', password: 'password456' },
       });
 
       expect(response.statusCode).toBe(409);
     });
 
-    it('returns 400 for invalid email', async () => {
+    it('returns 400 for invalid id', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'not-an-email', password: 'password123' },
+        payload: { id: 'NOT-VALID!', password: 'password123' },
       });
 
       expect(response.statusCode).toBe(400);
@@ -67,7 +67,7 @@ describe('auth routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'test@example.com', password: 'short' },
+        payload: { id: 'test-user', password: 'short' },
       });
 
       expect(response.statusCode).toBe(400);
@@ -79,32 +79,32 @@ describe('auth routes', () => {
       await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'login@example.com', password: 'password123' },
+        payload: { id: 'login-user', password: 'password123' },
       });
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/login',
-        payload: { email: 'login@example.com', password: 'password123' },
+        payload: { id: 'login-user', password: 'password123' },
       });
 
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(body.token).toBeTruthy();
-      expect(body.user.email).toBe('login@example.com');
+      expect(body.user.id).toBe('login-user');
     });
 
     it('returns 401 for wrong password', async () => {
       await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'login2@example.com', password: 'password123' },
+        payload: { id: 'login2', password: 'password123' },
       });
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/login',
-        payload: { email: 'login2@example.com', password: 'wrongpass' },
+        payload: { id: 'login2', password: 'wrongpass' },
       });
 
       expect(response.statusCode).toBe(401);
@@ -114,7 +114,7 @@ describe('auth routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/login',
-        payload: { email: 'nobody@example.com', password: 'anything' },
+        payload: { id: 'nobody', password: 'anything' },
       });
 
       expect(response.statusCode).toBe(401);
@@ -126,7 +126,7 @@ describe('auth routes', () => {
       const registerRes = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'me@example.com', password: 'password123' },
+        payload: { id: 'me-user', password: 'password123' },
       });
       const { token } = registerRes.json();
 
@@ -138,7 +138,7 @@ describe('auth routes', () => {
 
       expect(response.statusCode).toBe(200);
       const body = response.json();
-      expect(body.email).toBe('me@example.com');
+      expect(body.id).toBe('me-user');
     });
 
     it('returns 401 without token', async () => {
@@ -166,7 +166,7 @@ describe('auth routes', () => {
       const registerRes = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'changepw@example.com', password: 'oldpassword1' },
+        payload: { id: 'changepw', password: 'oldpassword1' },
       });
       const { token } = registerRes.json();
 
@@ -183,14 +183,14 @@ describe('auth routes', () => {
       const loginNew = await app.inject({
         method: 'POST',
         url: '/api/auth/login',
-        payload: { email: 'changepw@example.com', password: 'newpassword1' },
+        payload: { id: 'changepw', password: 'newpassword1' },
       });
       expect(loginNew.statusCode).toBe(200);
 
       const loginOld = await app.inject({
         method: 'POST',
         url: '/api/auth/login',
-        payload: { email: 'changepw@example.com', password: 'oldpassword1' },
+        payload: { id: 'changepw', password: 'oldpassword1' },
       });
       expect(loginOld.statusCode).toBe(401);
     });
@@ -199,7 +199,7 @@ describe('auth routes', () => {
       const registerRes = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'wrongpw@example.com', password: 'password123' },
+        payload: { id: 'wrongpw', password: 'password123' },
       });
       const { token } = registerRes.json();
 
@@ -217,7 +217,7 @@ describe('auth routes', () => {
       const registerRes = await app.inject({
         method: 'POST',
         url: '/api/auth/register',
-        payload: { email: 'shortpw@example.com', password: 'password123' },
+        payload: { id: 'shortpw', password: 'password123' },
       });
       const { token } = registerRes.json();
 

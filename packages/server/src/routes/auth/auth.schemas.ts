@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 const registerBodySchema = z.object({
-  email: z.string().email(),
+  id: z.string().min(1).regex(/^[a-z0-9][a-z0-9._-]*$/, 'Must be a lowercase slug'),
   password: z.string().min(8),
 });
 
 const loginBodySchema = z.object({
-  email: z.string().email(),
+  id: z.string().min(1),
   password: z.string(),
 });
 
@@ -14,14 +14,12 @@ const authResponseSchema = z.object({
   token: z.string(),
   user: z.object({
     id: z.string(),
-    email: z.string().email(),
     createdAt: z.string(),
   }),
 });
 
 const meResponseSchema = z.object({
   id: z.string(),
-  email: z.string().email(),
   createdAt: z.string(),
 });
 

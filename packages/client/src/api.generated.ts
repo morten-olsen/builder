@@ -23,8 +23,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** Format: email */
-                        email: string;
+                        id: string;
                         password: string;
                     };
                 };
@@ -40,8 +39,6 @@ export interface paths {
                             token: string;
                             user: {
                                 id: string;
-                                /** Format: email */
-                                email: string;
                                 createdAt: string;
                             };
                         };
@@ -85,8 +82,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** Format: email */
-                        email: string;
+                        id: string;
                         password: string;
                     };
                 };
@@ -102,8 +98,6 @@ export interface paths {
                             token: string;
                             user: {
                                 id: string;
-                                /** Format: email */
-                                email: string;
                                 createdAt: string;
                             };
                         };
@@ -152,8 +146,6 @@ export interface paths {
                     content: {
                         "application/json": {
                             id: string;
-                            /** Format: email */
-                            email: string;
                             createdAt: string;
                         };
                     };
@@ -341,6 +333,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        id: string;
                         name: string;
                         gitAuthorName: string;
                         /** Format: email */
@@ -674,6 +667,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        id: string;
                         name: string;
                         repoUrl: string;
                         defaultBranch?: string;
@@ -927,13 +921,13 @@ export interface paths {
                         "application/json": {
                             id: string;
                             userId: string;
+                            repoId: string;
                             identityId: string;
                             repoUrl: string;
                             branch: string;
                             prompt: string;
                             status: string;
                             error: string | null;
-                            repoId: string | null;
                             model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
@@ -998,13 +992,13 @@ export interface paths {
                         "application/json": {
                             id: string;
                             userId: string;
+                            repoId: string;
                             identityId: string;
                             repoUrl: string;
                             branch: string;
                             prompt: string;
                             status: string;
                             error: string | null;
-                            repoId: string | null;
                             model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
@@ -1036,6 +1030,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        id: string;
                         repoId: string;
                         identityId?: string;
                         branch?: string;
@@ -1054,13 +1049,13 @@ export interface paths {
                         "application/json": {
                             id: string;
                             userId: string;
+                            repoId: string;
                             identityId: string;
                             repoUrl: string;
                             branch: string;
                             prompt: string;
                             status: string;
                             error: string | null;
-                            repoId: string | null;
                             model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
@@ -1125,13 +1120,13 @@ export interface paths {
                         "application/json": {
                             id: string;
                             userId: string;
+                            repoId: string;
                             identityId: string;
                             repoUrl: string;
                             branch: string;
                             prompt: string;
                             status: string;
                             error: string | null;
-                            repoId: string | null;
                             model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;
@@ -1629,13 +1624,13 @@ export interface paths {
                         "application/json": {
                             id: string;
                             userId: string;
+                            repoId: string;
                             identityId: string;
                             repoUrl: string;
                             branch: string;
                             prompt: string;
                             status: string;
                             error: string | null;
-                            repoId: string | null;
                             model: string | null;
                             pinnedAt: string | null;
                             createdAt: string;

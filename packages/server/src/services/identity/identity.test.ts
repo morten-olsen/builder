@@ -17,7 +17,7 @@ describe('IdentityService', () => {
     identity = services.get(IdentityService);
 
     const auth = services.get(AuthService);
-    const { user } = await auth.register({ email: 'test@example.com', password: 'password123' });
+    const { user } = await auth.register({ id: 'test-user', password: 'password123' });
     userId = user.id;
   });
 
@@ -28,13 +28,14 @@ describe('IdentityService', () => {
   describe('create', () => {
     it('creates an identity with generated keys', async () => {
       const result = await identity.create({
+        id: 'work',
         userId,
         name: 'Work',
         gitAuthorName: 'Alice',
         gitAuthorEmail: 'alice@work.com',
       });
 
-      expect(result.id).toBeTruthy();
+      expect(result.id).toBe('work');
       expect(result.name).toBe('Work');
       expect(result.gitAuthorName).toBe('Alice');
       expect(result.gitAuthorEmail).toBe('alice@work.com');
@@ -44,6 +45,7 @@ describe('IdentityService', () => {
 
     it('creates an identity with imported keys', async () => {
       const result = await identity.create({
+        id: 'imported',
         userId,
         name: 'Imported',
         gitAuthorName: 'Bob',
@@ -59,12 +61,14 @@ describe('IdentityService', () => {
   describe('list', () => {
     it('returns all identities for the user', async () => {
       await identity.create({
+        id: 'first',
         userId,
         name: 'First',
         gitAuthorName: 'A',
         gitAuthorEmail: 'a@test.com',
       });
       await identity.create({
+        id: 'second',
         userId,
         name: 'Second',
         gitAuthorName: 'B',
@@ -88,6 +92,7 @@ describe('IdentityService', () => {
   describe('get', () => {
     it('returns a single identity', async () => {
       const created = await identity.create({
+        id: 'test-id',
         userId,
         name: 'Test',
         gitAuthorName: 'Alice',
@@ -108,6 +113,7 @@ describe('IdentityService', () => {
 
     it('throws IdentityNotFoundError for another user\'s identity', async () => {
       const created = await identity.create({
+        id: 'mine',
         userId,
         name: 'Mine',
         gitAuthorName: 'Alice',
@@ -115,7 +121,7 @@ describe('IdentityService', () => {
       });
 
       const auth = services.get(AuthService);
-      const { user: otherUser } = await auth.register({ email: 'other@example.com', password: 'password123' });
+      const { user: otherUser } = await auth.register({ id: 'other-user', password: 'password123' });
 
       await expect(
         identity.get({ userId: otherUser.id, identityId: created.id }),
@@ -126,6 +132,7 @@ describe('IdentityService', () => {
   describe('update', () => {
     it('updates name and git author fields', async () => {
       const created = await identity.create({
+        id: 'old-id',
         userId,
         name: 'Old',
         gitAuthorName: 'Old Name',
@@ -148,6 +155,7 @@ describe('IdentityService', () => {
 
     it('partially updates only provided fields', async () => {
       const created = await identity.create({
+        id: 'original-id',
         userId,
         name: 'Original',
         gitAuthorName: 'Name',
@@ -175,6 +183,7 @@ describe('IdentityService', () => {
   describe('delete', () => {
     it('deletes an identity', async () => {
       const created = await identity.create({
+        id: 'to-delete',
         userId,
         name: 'ToDelete',
         gitAuthorName: 'A',
@@ -198,6 +207,7 @@ describe('IdentityService', () => {
   describe('getPrivateKey', () => {
     it('decrypts and returns the private key', async () => {
       const created = await identity.create({
+        id: 'with-key',
         userId,
         name: 'WithKey',
         gitAuthorName: 'Alice',
@@ -211,6 +221,7 @@ describe('IdentityService', () => {
 
     it('returns imported private key after decryption', async () => {
       await identity.create({
+        id: 'imported-key',
         userId,
         name: 'Imported',
         gitAuthorName: 'Bob',

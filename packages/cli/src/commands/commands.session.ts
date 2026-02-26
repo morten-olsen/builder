@@ -1,10 +1,12 @@
 import type { Command } from 'commander';
-import type { SessionEvent } from '@morten-olsen/builder-server';
+import type { SessionEvent, SessionRef } from '@morten-olsen/builder-server';
 import {
   AgentService,
   EventBusService,
   RepoService,
   SessionService,
+  sessionKey,
+  sessionRef,
   startSession,
 } from '@morten-olsen/builder-server';
 
@@ -45,13 +47,14 @@ const registerSessionCommands = (program: Command): void => {
   session
     .command('create')
     .description('Create a new session')
+    .requiredOption('--id <id>', 'Session ID (lowercase slug)')
     .requiredOption('--repo <id>', 'Repo ID')
     .option('--identity <id>', 'Identity ID (overrides repo default)')
     .option('--branch <branch>', 'Branch name (overrides repo default)')
     .requiredOption('--prompt <prompt>', 'Prompt for the agent')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ repo: string; identity?: string; branch?: string; prompt: string }>();
+      const opts = this.opts<{ id: string; repo: string; identity?: string; branch?: string; prompt: string }>();
       const { services, cleanup } = await createCliContext();
       try {
         const { userId } = await requireAuth(services);
@@ -70,12 +73,13 @@ const registerSessionCommands = (program: Command): void => {
 
         const sessionService = services.get(SessionService);
         const result = await sessionService.create({
+          id: opts.id,
           userId,
+          repoId: repo.id,
           identityId,
           repoUrl: repo.repoUrl,
           branch,
           prompt: opts.prompt,
-          repoId: repo.id,
         });
 
         if (isJson(this)) {
@@ -155,15 +159,18 @@ const registerSessionCommands = (program: Command): void => {
       const { services, cleanup } = await createCliContext();
       try {
         const { userId } = await requireAuth(services);
+        const sessionService = services.get(SessionService);
+        const s = await sessionService.get({ userId, sessionId: id });
+        const ref: SessionRef = sessionRef(s);
+
         const agentService = services.get(AgentService);
         const provider = agentService.getProvider();
-        await provider.abort(id);
+        await provider.abort(sessionKey(ref));
 
-        const sessionService = services.get(SessionService);
-        await sessionService.delete({ userId, sessionId: id });
+        await sessionService.delete(ref);
 
         const eventBus = services.get(EventBusService);
-        eventBus.remove(id);
+        eventBus.remove(ref);
 
         console.log(`Session ${id} deleted.`);
       } finally {
@@ -174,17 +181,18 @@ const registerSessionCommands = (program: Command): void => {
   session
     .command('run')
     .description('Create a session and run the agent to completion')
+    .requiredOption('--id <id>', 'Session ID (lowercase slug)')
     .requiredOption('--repo <id>', 'Repo ID')
     .option('--identity <id>', 'Identity ID (overrides repo default)')
     .option('--branch <branch>', 'Branch name (overrides repo default)')
     .requiredOption('--prompt <prompt>', 'Prompt for the agent')
     .option('--json', 'Output as newline-delimited JSON events')
     .action(async function (this: Command) {
-      const opts = this.opts<{ repo: string; identity?: string; branch?: string; prompt: string }>();
+      const opts = this.opts<{ id: string; repo: string; identity?: string; branch?: string; prompt: string }>();
       const json = isJson(this);
       const { services, cleanup } = await createCliContext();
       let exitCode = 0;
-      let sessionId: string | null = null;
+      let ref: SessionRef | null = null;
 
       try {
         const { userId } = await requireAuth(services);
@@ -205,15 +213,16 @@ const registerSessionCommands = (program: Command): void => {
         const eventBus = services.get(EventBusService);
 
         const result = await sessionService.create({
+          id: opts.id,
           userId,
+          repoId: repo.id,
           identityId,
           repoUrl: repo.repoUrl,
           branch,
           prompt: opts.prompt,
-          repoId: repo.id,
         });
 
-        sessionId = result.id;
+        ref = sessionRef(result);
 
         if (!json) {
           console.log(`Session ${result.id} created. Starting agent...`);
@@ -221,7 +230,7 @@ const registerSessionCommands = (program: Command): void => {
 
         let firstTurnDone = false;
 
-        const unsubscribe = eventBus.subscribe(result.id, (event: SessionEvent) => {
+        const unsubscribe = eventBus.subscribe(ref, (event: SessionEvent) => {
           if (json) {
             console.log(JSON.stringify(event));
           } else {
@@ -237,12 +246,13 @@ const registerSessionCommands = (program: Command): void => {
           }
         });
 
+        const currentRef = ref;
         const handleSignal = async (): Promise<void> => {
           if (!json) {
             console.log('\nAborting...');
           }
           const provider = services.get(AgentService).getProvider();
-          await provider.abort(result.id);
+          await provider.abort(sessionKey(currentRef));
           unsubscribe();
           await cleanup();
           process.exit(130);
@@ -251,12 +261,12 @@ const registerSessionCommands = (program: Command): void => {
         process.on('SIGINT', () => void handleSignal());
         process.on('SIGTERM', () => void handleSignal());
 
-        await startSession(services, result.id);
+        await startSession(services, ref);
 
         unsubscribe();
 
-        if (firstTurnDone && !json && sessionId) {
-          console.log(`\nSession idle: ${sessionId}. Send follow-up messages with: builder session send ${sessionId} --message '...'`);
+        if (firstTurnDone && !json && ref) {
+          console.log(`\nSession idle: ${result.id}. Send follow-up messages with: builder session send ${result.id} --message '...'`);
         }
       } finally {
         await cleanup();

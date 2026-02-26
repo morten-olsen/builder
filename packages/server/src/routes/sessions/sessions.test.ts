@@ -30,6 +30,8 @@ const createMockAgentProvider = (): AgentProvider => ({
   isRunning: () => false,
 });
 
+let sessionCounter = 0;
+
 describe('session routes', () => {
   let services: Services;
   let app: Awaited<ReturnType<typeof createApp>>;
@@ -39,6 +41,7 @@ describe('session routes', () => {
   let repoId: string;
 
   beforeEach(async () => {
+    sessionCounter = 0;
     const config = createTestConfig({
       agent: { provider: 'mock', apiKey: '', model: 'test' },
     });
@@ -57,7 +60,7 @@ describe('session routes', () => {
     const registerRes = await app.inject({
       method: 'POST',
       url: '/api/auth/register',
-      payload: { email: 'test@example.com', password: 'password123' },
+      payload: { id: 'test-user', password: 'password123' },
     });
     const body = registerRes.json();
     token = body.token;
@@ -68,6 +71,7 @@ describe('session routes', () => {
       url: `/api/users/${userId}/identities`,
       headers: { authorization: `Bearer ${token}` },
       payload: {
+        id: 'test-identity',
         name: 'Test Identity',
         gitAuthorName: 'Alice',
         gitAuthorEmail: 'alice@test.com',
@@ -80,6 +84,7 @@ describe('session routes', () => {
       url: '/api/repos',
       headers: { authorization: `Bearer ${token}` },
       payload: {
+        id: 'test-repo',
         name: 'Test Repo',
         repoUrl: 'git@github.com:test/repo.git',
         defaultBranch: 'main',
@@ -97,11 +102,13 @@ describe('session routes', () => {
   const authHeader = (): Record<string, string> => ({ authorization: `Bearer ${token}` });
 
   const createSession = async (prompt = 'Fix the bug'): Promise<Record<string, unknown>> => {
+    sessionCounter++;
     const res = await app.inject({
       method: 'POST',
       url: '/api/sessions',
       headers: authHeader(),
       payload: {
+        id: `session-${sessionCounter}`,
         repoId,
         prompt,
       },
@@ -116,6 +123,7 @@ describe('session routes', () => {
         url: '/api/sessions',
         headers: authHeader(),
         payload: {
+          id: 'my-session',
           repoId,
           prompt: 'Fix the bug',
         },
@@ -123,7 +131,7 @@ describe('session routes', () => {
 
       expect(response.statusCode).toBe(201);
       const body = response.json();
-      expect(body.id).toBeTruthy();
+      expect(body.id).toBe('my-session');
       expect(body.userId).toBe(userId);
       expect(body.status).toBe('pending');
       expect(body.prompt).toBe('Fix the bug');
@@ -134,6 +142,7 @@ describe('session routes', () => {
         method: 'POST',
         url: '/api/sessions',
         payload: {
+          id: 'no-auth',
           repoId,
           prompt: 'Fix',
         },
@@ -147,7 +156,7 @@ describe('session routes', () => {
         method: 'POST',
         url: '/api/sessions',
         headers: authHeader(),
-        payload: { repoId },
+        payload: { id: 'missing-fields', repoId },
       });
 
       expect(response.statusCode).toBe(400);

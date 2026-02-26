@@ -1,6 +1,7 @@
 import type { Command } from 'commander';
 import {
   AuthService,
+  DatabaseService,
   IdentityService,
   RepoService,
   SessionService,
@@ -28,7 +29,6 @@ const registerAdminCommands = (program: Command): void => {
         } else {
           printTable(users, [
             { header: 'ID', key: 'id' },
-            { header: 'Email', key: 'email' },
             { header: 'Created', key: 'createdAt' },
           ]);
         }
@@ -113,8 +113,8 @@ const registerAdminCommands = (program: Command): void => {
           printTable(sessions, [
             { header: 'ID', key: 'id' },
             { header: 'User', key: 'userId' },
+            { header: 'Repo', key: 'repoId' },
             { header: 'Status', key: 'status' },
-            { header: 'Repo', key: 'repoUrl' },
             { header: 'Branch', key: 'branch' },
             { header: 'Created', key: 'createdAt' },
           ]);
@@ -123,6 +123,7 @@ const registerAdminCommands = (program: Command): void => {
         await cleanup();
       }
     });
+
   admin
     .command('reset-password')
     .description('Reset a user password')
@@ -141,6 +142,49 @@ const registerAdminCommands = (program: Command): void => {
           printJson({ success: true });
         } else {
           console.log('Password reset successfully.');
+        }
+      } finally {
+        await cleanup();
+      }
+    });
+
+  admin
+    .command('set-worktree-base')
+    .description('Set a custom worktree base directory for a user')
+    .requiredOption('--user <id>', 'User ID')
+    .requiredOption('--path <path>', 'Worktree base directory (use "default" to clear)')
+    .option('--json', 'Output as JSON')
+    .action(async function (this: Command) {
+      const opts = this.opts<{ user: string; path: string }>();
+      const { services, cleanup } = await createCliContext();
+      try {
+        const worktreeBase = opts.path === 'default' ? null : opts.path;
+        const db = await services.get(DatabaseService).getInstance();
+
+        const user = await db
+          .selectFrom('users')
+          .select('id')
+          .where('id', '=', opts.user)
+          .executeTakeFirst();
+
+        if (!user) {
+          throw new Error(`User "${opts.user}" not found`);
+        }
+
+        await db
+          .updateTable('users')
+          .set({ worktree_base: worktreeBase, updated_at: new Date().toISOString() })
+          .where('id', '=', opts.user)
+          .execute();
+
+        if (isJson(this)) {
+          printJson({ success: true, worktreeBase });
+        } else {
+          if (worktreeBase) {
+            console.log(`Worktree base set to: ${worktreeBase}`);
+          } else {
+            console.log('Worktree base reset to default.');
+          }
         }
       } finally {
         await cleanup();

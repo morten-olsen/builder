@@ -7,15 +7,15 @@ class AuthError extends Error {
 
 class InvalidCredentialsError extends AuthError {
   constructor() {
-    super('Invalid email or password');
+    super('Invalid id or password');
     this.name = 'InvalidCredentialsError';
   }
 }
 
-class EmailAlreadyExistsError extends AuthError {
+class UserAlreadyExistsError extends AuthError {
   constructor() {
-    super('Email already exists');
-    this.name = 'EmailAlreadyExistsError';
+    super('User already exists');
+    this.name = 'UserAlreadyExistsError';
   }
 }
 
@@ -33,4 +33,4 @@ class UserNotFoundError extends AuthError {
   }
 }
 
-export { AuthError, InvalidCredentialsError, EmailAlreadyExistsError, InvalidTokenError, UserNotFoundError };
+export { AuthError, InvalidCredentialsError, UserAlreadyExistsError, InvalidTokenError, UserNotFoundError };

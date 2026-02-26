@@ -6,7 +6,8 @@ import { AuthService } from '../services/auth/auth.js';
 import { EventBusService } from '../sse/event-bus.js';
 import type { SessionEvent, UserEvent } from '../sse/event-bus.js';
 import { SessionEventService } from '../services/session-event/session-event.js';
-import { SessionService } from '../services/session/session.js';
+import type { SessionRef } from '../services/session/session.js';
+import { sessionRef, SessionService } from '../services/session/session.js';
 
 const authMessageSchema = z.object({
   type: z.literal('auth'),
@@ -78,8 +79,10 @@ const setupAuthenticatedSocket = (socket: WebSocket, userId: string, services: S
   });
 
   const handleSubscribe = async (sessionId: string, afterSequence?: number): Promise<void> => {
+    let ref: SessionRef;
     try {
-      await sessionService.get({ userId, sessionId });
+      const session = await sessionService.get({ userId, sessionId });
+      ref = sessionRef(session);
     } catch {
       return;
     }
@@ -89,7 +92,7 @@ const setupAuthenticatedSocket = (socket: WebSocket, userId: string, services: S
     const buffer: { event: SessionEvent; sequence: number }[] = [];
     let replayed = false;
 
-    const unsubscribe = eventBus.subscribe(sessionId, (event, sequence) => {
+    const unsubscribe = eventBus.subscribe(ref, (event, sequence) => {
       if (replayed) {
         send({ kind: 'session:event', sessionId, event, sequence });
       } else {
@@ -100,7 +103,7 @@ const setupAuthenticatedSocket = (socket: WebSocket, userId: string, services: S
     subscriptions.set(sessionId, unsubscribe);
 
     const historical = await sessionEventService.listBySession({
-      sessionId,
+      ref,
       afterSequence,
     });
 

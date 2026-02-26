@@ -159,7 +159,7 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
       <div className="border-t border-border-base p-2.5">
         <div className="flex items-center gap-2 rounded bg-surface-2 px-2.5 py-2">
           <div className="min-w-0 flex-1">
-            <p className="truncate font-mono text-xs text-text-dim">{user?.email}</p>
+            <p className="truncate font-mono text-xs text-text-dim">{user?.id}</p>
           </div>
           <Link
             to="/settings/repos"

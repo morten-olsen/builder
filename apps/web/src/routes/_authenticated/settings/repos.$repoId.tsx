@@ -19,6 +19,7 @@ const RepoDetailPage = (): React.ReactNode => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showNewSession, setShowNewSession] = useState(false);
+  const [sessionId, setSessionId] = useState('');
   const [prompt, setPrompt] = useState('');
   const [branch, setBranch] = useState('');
 
@@ -85,6 +86,7 @@ const RepoDetailPage = (): React.ReactNode => {
     mutationFn: async () => {
       const { data, error } = await getClient().api.POST('/api/sessions', {
         body: {
+          id: sessionId,
           repoId,
           prompt,
           ...(branch ? { branch } : {}),
@@ -202,6 +204,17 @@ const RepoDetailPage = (): React.ReactNode => {
 
         {showNewSession && (
           <form onSubmit={handleCreateSession} className="border-b border-border-base bg-surface-0/50 p-4">
+            <div className="mb-3">
+              <Label>Session ID</Label>
+              <Input
+                required
+                value={sessionId}
+                onChange={(e) => setSessionId(e.target.value)}
+                placeholder="fix-bug-123"
+                pattern="^[a-z0-9][a-z0-9._-]*$"
+                title="Lowercase slug"
+              />
+            </div>
             <div className="mb-3">
               <Label>Prompt</Label>
               <Textarea

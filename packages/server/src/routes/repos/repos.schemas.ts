@@ -5,6 +5,7 @@ const repoParamsSchema = z.object({
 });
 
 const createRepoBodySchema = z.object({
+  id: z.string().min(1).regex(/^[a-z0-9][a-z0-9._-]*$/, 'Must be a lowercase slug'),
   name: z.string().min(1),
   repoUrl: z.string().min(1),
   defaultBranch: z.string().min(1).optional(),

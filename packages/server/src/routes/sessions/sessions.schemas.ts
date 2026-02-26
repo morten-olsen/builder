@@ -5,6 +5,7 @@ const sessionParamsSchema = z.object({
 });
 
 const createSessionBodySchema = z.object({
+  id: z.string().min(1).regex(/^[a-z0-9][a-z0-9._-]*$/, 'Must be a lowercase slug'),
   repoId: z.string().min(1),
   identityId: z.string().min(1).optional(),
   branch: z.string().min(1).optional(),
@@ -19,13 +20,13 @@ const sendMessageBodySchema = z.object({
 const sessionResponseSchema = z.object({
   id: z.string(),
   userId: z.string(),
+  repoId: z.string(),
   identityId: z.string(),
   repoUrl: z.string(),
   branch: z.string(),
   prompt: z.string(),
   status: z.string(),
   error: z.string().nullable(),
-  repoId: z.string().nullable(),
   model: z.string().nullable(),
   pinnedAt: z.string().nullable(),
   createdAt: z.string(),

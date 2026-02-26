@@ -11,17 +11,19 @@ const registerIdentityCommands = (program: Command): void => {
   identity
     .command('create')
     .description('Create a new identity')
+    .requiredOption('--id <id>', 'Identity ID (lowercase slug)')
     .requiredOption('--name <name>', 'Identity name')
     .requiredOption('--git-name <name>', 'Git author name')
     .requiredOption('--git-email <email>', 'Git author email')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ name: string; gitName: string; gitEmail: string }>();
+      const opts = this.opts<{ id: string; name: string; gitName: string; gitEmail: string }>();
       const { services, cleanup } = await createCliContext();
       try {
         const { userId } = await requireAuth(services);
         const identityService = services.get(IdentityService);
         const result = await identityService.create({
+          id: opts.id,
           userId,
           name: opts.name,
           gitAuthorName: opts.gitName,

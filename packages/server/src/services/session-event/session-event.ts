@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import type { Services } from '../../container/container.js';
 import type { SessionEvent } from '../../sse/event-bus.js';
+import type { SessionRef } from '../session/session.js';
+import { sessionKey } from '../session/session.js';
 import { DatabaseService } from '../database/database.js';
 
 type PersistedSessionEvent = {
@@ -26,38 +28,43 @@ class SessionEventService {
     return this.#services.get(DatabaseService);
   }
 
-  #ensureSeeded = async (sessionId: string): Promise<void> => {
-    if (this.#counters.has(sessionId)) return;
-    if (!this.#seedPromises.has(sessionId)) {
+  #ensureSeeded = async (key: string, ref: SessionRef): Promise<void> => {
+    if (this.#counters.has(key)) return;
+    if (!this.#seedPromises.has(key)) {
       const promise = (async (): Promise<void> => {
         const db = await this.#database.getInstance();
         const row = await db
           .selectFrom('session_events')
           .select(db.fn.max('sequence').as('max_seq'))
-          .where('session_id', '=', sessionId)
+          .where('session_id', '=', ref.sessionId)
+          .where('repo_id', '=', ref.repoId)
+          .where('user_id', '=', ref.userId)
           .executeTakeFirst();
-        this.#counters.set(sessionId, (row?.max_seq as number | null) ?? 0);
+        this.#counters.set(key, (row?.max_seq as number | null) ?? 0);
       })();
-      this.#seedPromises.set(sessionId, promise);
+      this.#seedPromises.set(key, promise);
     }
-    await this.#seedPromises.get(sessionId);
+    await this.#seedPromises.get(key);
   };
 
-  nextSequence = async (sessionId: string): Promise<number> => {
-    await this.#ensureSeeded(sessionId);
-    const current = this.#counters.get(sessionId) ?? 0;
+  nextSequence = async (ref: SessionRef): Promise<number> => {
+    const key = sessionKey(ref);
+    await this.#ensureSeeded(key, ref);
+    const current = this.#counters.get(key) ?? 0;
     const next = current + 1;
-    this.#counters.set(sessionId, next);
+    this.#counters.set(key, next);
     return next;
   };
 
-  persist = async (sessionId: string, sequence: number, event: SessionEvent): Promise<void> => {
+  persist = async (ref: SessionRef, sequence: number, event: SessionEvent): Promise<void> => {
     const db = await this.#database.getInstance();
     await db
       .insertInto('session_events')
       .values({
         id: randomUUID(),
-        session_id: sessionId,
+        session_id: ref.sessionId,
+        repo_id: ref.repoId,
+        user_id: ref.userId,
         sequence,
         type: event.type,
         data: JSON.stringify(event.data),
@@ -67,14 +74,16 @@ class SessionEventService {
   };
 
   listBySession = async (input: {
-    sessionId: string;
+    ref: SessionRef;
     afterSequence?: number;
   }): Promise<PersistedSessionEvent[]> => {
     const db = await this.#database.getInstance();
     let query = db
       .selectFrom('session_events')
       .selectAll()
-      .where('session_id', '=', input.sessionId)
+      .where('session_id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .orderBy('sequence', 'asc');
 
     if (input.afterSequence !== undefined) {
@@ -94,22 +103,26 @@ class SessionEventService {
   };
 
   deleteAfterSequence = async (input: {
-    sessionId: string;
+    ref: SessionRef;
     afterSequence: number;
   }): Promise<void> => {
     const db = await this.#database.getInstance();
     await db
       .deleteFrom('session_events')
-      .where('session_id', '=', input.sessionId)
+      .where('session_id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .where('sequence', '>', input.afterSequence)
       .execute();
 
-    this.#counters.set(input.sessionId, input.afterSequence);
+    const key = sessionKey(input.ref);
+    this.#counters.set(key, input.afterSequence);
   };
 
-  remove = (sessionId: string): void => {
-    this.#counters.delete(sessionId);
-    this.#seedPromises.delete(sessionId);
+  remove = (ref: SessionRef): void => {
+    const key = sessionKey(ref);
+    this.#counters.delete(key);
+    this.#seedPromises.delete(key);
   };
 }
 

@@ -11,18 +11,20 @@ const registerRepoCommands = (program: Command): void => {
   repo
     .command('create')
     .description('Create a new repo')
+    .requiredOption('--id <id>', 'Repo ID (lowercase slug)')
     .requiredOption('--name <name>', 'Repo name')
     .requiredOption('--url <url>', 'Repository URL')
     .option('--branch <branch>', 'Default branch')
     .option('--identity <id>', 'Default identity ID')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ name: string; url: string; branch?: string; identity?: string }>();
+      const opts = this.opts<{ id: string; name: string; url: string; branch?: string; identity?: string }>();
       const { services, cleanup } = await createCliContext();
       try {
         const { userId } = await requireAuth(services);
         const repoService = services.get(RepoService);
         const result = await repoService.create({
+          id: opts.id,
           userId,
           name: opts.name,
           repoUrl: opts.url,

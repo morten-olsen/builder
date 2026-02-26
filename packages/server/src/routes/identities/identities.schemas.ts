@@ -11,6 +11,7 @@ const identityParamsSchema = z.object({
 
 const createIdentityBodySchema = z
   .object({
+    id: z.string().min(1).regex(/^[a-z0-9][a-z0-9._-]*$/, 'Must be a lowercase slug'),
     name: z.string().min(1),
     gitAuthorName: z.string().min(1),
     gitAuthorEmail: z.string().email(),

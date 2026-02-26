@@ -1,21 +1,17 @@
-import { randomUUID } from 'node:crypto';
-
 import { SignJWT, jwtVerify } from 'jose';
 
 import type { Services } from '../../container/container.js';
 import { DatabaseService } from '../database/database.js';
 
-import { EmailAlreadyExistsError, InvalidCredentialsError, InvalidTokenError, UserNotFoundError } from './auth.errors.js';
+import { InvalidCredentialsError, InvalidTokenError, UserAlreadyExistsError, UserNotFoundError } from './auth.errors.js';
 import { hashPassword, verifyPassword } from './auth.utils.js';
 
 type AuthTokenPayload = {
   sub: string;
-  email: string;
 };
 
 type AuthUser = {
   id: string;
-  email: string;
   createdAt: string;
 };
 
@@ -39,49 +35,47 @@ class AuthService {
     return new TextEncoder().encode(this.#services.config.jwt.secret);
   }
 
-  register = async (input: { email: string; password: string }): Promise<AuthResponse> => {
+  register = async (input: { id: string; password: string }): Promise<AuthResponse> => {
     const db = await this.#database.getInstance();
 
     const existing = await db
       .selectFrom('users')
       .select('id')
-      .where('email', '=', input.email)
+      .where('id', '=', input.id)
       .executeTakeFirst();
 
     if (existing) {
-      throw new EmailAlreadyExistsError();
+      throw new UserAlreadyExistsError();
     }
 
-    const id = randomUUID();
     const passwordHash = await hashPassword(input.password);
     const now = new Date().toISOString();
 
     await db
       .insertInto('users')
       .values({
-        id,
-        email: input.email,
+        id: input.id,
         password_hash: passwordHash,
         created_at: now,
         updated_at: now,
       })
       .execute();
 
-    const token = await this.#createToken({ sub: id, email: input.email });
+    const token = await this.#createToken({ sub: input.id });
 
     return {
       token,
-      user: { id, email: input.email, createdAt: now },
+      user: { id: input.id, createdAt: now },
     };
   };
 
-  login = async (input: { email: string; password: string }): Promise<AuthResponse> => {
+  login = async (input: { id: string; password: string }): Promise<AuthResponse> => {
     const db = await this.#database.getInstance();
 
     const user = await db
       .selectFrom('users')
       .selectAll()
-      .where('email', '=', input.email)
+      .where('id', '=', input.id)
       .executeTakeFirst();
 
     if (!user) {
@@ -93,11 +87,11 @@ class AuthService {
       throw new InvalidCredentialsError();
     }
 
-    const token = await this.#createToken({ sub: user.id, email: user.email });
+    const token = await this.#createToken({ sub: user.id });
 
     return {
       token,
-      user: { id: user.id, email: user.email, createdAt: user.created_at },
+      user: { id: user.id, createdAt: user.created_at },
     };
   };
 
@@ -106,7 +100,6 @@ class AuthService {
       const { payload } = await jwtVerify(token, this.#secret);
       return {
         sub: payload.sub as string,
-        email: payload.email as string,
       };
     } catch {
       throw new InvalidTokenError();
@@ -118,7 +111,7 @@ class AuthService {
 
     const user = await db
       .selectFrom('users')
-      .select(['id', 'email', 'created_at'])
+      .select(['id', 'created_at'])
       .where('id', '=', userId)
       .executeTakeFirst();
 
@@ -126,7 +119,7 @@ class AuthService {
       throw new InvalidCredentialsError();
     }
 
-    return { id: user.id, email: user.email, createdAt: user.created_at };
+    return { id: user.id, createdAt: user.created_at };
   };
 
   listUsers = async (): Promise<AuthUser[]> => {
@@ -134,11 +127,43 @@ class AuthService {
 
     const rows = await db
       .selectFrom('users')
-      .select(['id', 'email', 'created_at'])
+      .select(['id', 'created_at'])
       .orderBy('created_at', 'desc')
       .execute();
 
-    return rows.map((row) => ({ id: row.id, email: row.email, createdAt: row.created_at }));
+    return rows.map((row) => ({ id: row.id, createdAt: row.created_at }));
+  };
+
+  getWorktreeBase = async (userId: string): Promise<string | null> => {
+    const db = await this.#database.getInstance();
+
+    const row = await db
+      .selectFrom('users')
+      .select('worktree_base')
+      .where('id', '=', userId)
+      .executeTakeFirst();
+
+    return row?.worktree_base ?? null;
+  };
+
+  setWorktreeBase = async (input: { userId: string; worktreeBase: string | null }): Promise<void> => {
+    const db = await this.#database.getInstance();
+
+    const user = await db
+      .selectFrom('users')
+      .select('id')
+      .where('id', '=', input.userId)
+      .executeTakeFirst();
+
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+
+    await db
+      .updateTable('users')
+      .set({ worktree_base: input.worktreeBase, updated_at: new Date().toISOString() })
+      .where('id', '=', input.userId)
+      .execute();
   };
 
   changePassword = async (input: { userId: string; currentPassword: string; newPassword: string }): Promise<void> => {
@@ -189,7 +214,7 @@ class AuthService {
   };
 
   #createToken = async (payload: AuthTokenPayload): Promise<string> => {
-    return new SignJWT({ email: payload.email })
+    return new SignJWT({})
       .setProtectedHeader({ alg: 'HS256' })
       .setSubject(payload.sub)
       .setIssuedAt()

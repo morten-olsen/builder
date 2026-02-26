@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-
 import type { Services } from '../../container/container.js';
 import { DatabaseService } from '../database/database.js';
 
@@ -18,6 +16,7 @@ type Identity = {
 };
 
 type CreateIdentityInput = {
+  id: string;
   userId: string;
   name: string;
   gitAuthorName: string;
@@ -51,7 +50,6 @@ class IdentityService {
 
   create = async (input: CreateIdentityInput): Promise<Identity> => {
     const db = await this.#database.getInstance();
-    const id = randomUUID();
     const now = new Date().toISOString();
 
     let publicKey: string;
@@ -69,7 +67,7 @@ class IdentityService {
     await db
       .insertInto('identities')
       .values({
-        id,
+        id: input.id,
         user_id: input.userId,
         name: input.name,
         git_author_name: input.gitAuthorName,
@@ -82,7 +80,7 @@ class IdentityService {
       .execute();
 
     return {
-      id,
+      id: input.id,
       userId: input.userId,
       name: input.name,
       gitAuthorName: input.gitAuthorName,

@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-
 import type { Services } from '../../container/container.js';
 import { DatabaseService } from '../database/database.js';
 
@@ -17,6 +15,7 @@ type Repo = {
 };
 
 type CreateRepoInput = {
+  id: string;
   userId: string;
   name: string;
   repoUrl: string;
@@ -66,13 +65,12 @@ class RepoService {
 
   create = async (input: CreateRepoInput): Promise<Repo> => {
     const db = await this.#database.getInstance();
-    const id = randomUUID();
     const now = new Date().toISOString();
 
     await db
       .insertInto('repos')
       .values({
-        id,
+        id: input.id,
         user_id: input.userId,
         name: input.name,
         repo_url: input.repoUrl,
@@ -84,7 +82,7 @@ class RepoService {
       .execute();
 
     return {
-      id,
+      id: input.id,
       userId: input.userId,
       name: input.name,
       repoUrl: input.repoUrl,
@@ -116,22 +114,6 @@ class RepoService {
       .selectAll()
       .where('id', '=', input.repoId)
       .where('user_id', '=', input.userId)
-      .executeTakeFirst();
-
-    if (!row) {
-      throw new RepoNotFoundError();
-    }
-
-    return mapRow(row);
-  };
-
-  getById = async (repoId: string): Promise<Repo> => {
-    const db = await this.#database.getInstance();
-
-    const row = await db
-      .selectFrom('repos')
-      .selectAll()
-      .where('id', '=', repoId)
       .executeTakeFirst();
 
     if (!row) {

@@ -12,22 +12,22 @@ const registerAuthCommands = (program: Command): void => {
   auth
     .command('register')
     .description('Register a new account')
-    .requiredOption('--email <email>', 'Email address')
+    .requiredOption('--id <id>', 'User ID (slug)')
     .option('--password <password>', 'Password (omit to enter securely)')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ email: string; password?: string }>();
+      const opts = this.opts<{ id: string; password?: string }>();
       const password = opts.password ?? (await promptPasswordWithConfirm('Password: '));
       const { services, cleanup } = await createCliContext();
       try {
         const authService = services.get(AuthService);
-        const result = await authService.register({ email: opts.email, password });
-        saveAuth({ token: result.token, userId: result.user.id, email: result.user.email });
+        const result = await authService.register({ id: opts.id, password });
+        saveAuth({ token: result.token, userId: result.user.id });
 
         if (isJson(this)) {
           printJson(result);
         } else {
-          console.log(`Registered and logged in as ${result.user.email}`);
+          console.log(`Registered and logged in as ${result.user.id}`);
         }
       } finally {
         await cleanup();
@@ -37,22 +37,22 @@ const registerAuthCommands = (program: Command): void => {
   auth
     .command('login')
     .description('Log in to an existing account')
-    .requiredOption('--email <email>', 'Email address')
+    .requiredOption('--id <id>', 'User ID')
     .option('--password <password>', 'Password (omit to enter securely)')
     .option('--json', 'Output as JSON')
     .action(async function (this: Command) {
-      const opts = this.opts<{ email: string; password?: string }>();
+      const opts = this.opts<{ id: string; password?: string }>();
       const password = opts.password ?? (await promptPassword('Password: '));
       const { services, cleanup } = await createCliContext();
       try {
         const authService = services.get(AuthService);
-        const result = await authService.login({ email: opts.email, password });
-        saveAuth({ token: result.token, userId: result.user.id, email: result.user.email });
+        const result = await authService.login({ id: opts.id, password });
+        saveAuth({ token: result.token, userId: result.user.id });
 
         if (isJson(this)) {
           printJson(result);
         } else {
-          console.log(`Logged in as ${result.user.email}`);
+          console.log(`Logged in as ${result.user.id}`);
         }
       } finally {
         await cleanup();
@@ -74,7 +74,6 @@ const registerAuthCommands = (program: Command): void => {
           printJson(user);
         } else {
           console.log(`id:    ${user.id}`);
-          console.log(`email: ${user.email}`);
           console.log(`since: ${user.createdAt}`);
         }
       } finally {

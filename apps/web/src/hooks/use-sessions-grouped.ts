@@ -8,7 +8,7 @@ type Session = {
   branch: string;
   prompt: string;
   status: string;
-  repoId: string | null;
+  repoId: string;
   pinnedAt: string | null;
   createdAt: string;
 };

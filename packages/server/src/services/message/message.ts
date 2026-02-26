@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { Services } from '../../container/container.js';
+import type { SessionRef } from '../session/session.js';
 import { DatabaseService } from '../database/database.js';
 
 type Message = {
@@ -13,7 +14,7 @@ type Message = {
 };
 
 type CreateMessageInput = {
-  sessionId: string;
+  ref: SessionRef;
   role: 'user' | 'assistant';
   content: string;
   commitSha?: string;
@@ -56,7 +57,9 @@ class MessageService {
       .insertInto('messages')
       .values({
         id,
-        session_id: input.sessionId,
+        session_id: input.ref.sessionId,
+        repo_id: input.ref.repoId,
+        user_id: input.ref.userId,
         role: input.role,
         content: input.content,
         commit_sha: commitSha,
@@ -66,7 +69,7 @@ class MessageService {
 
     return {
       id,
-      sessionId: input.sessionId,
+      sessionId: input.ref.sessionId,
       role: input.role,
       content: input.content,
       commitSha,
@@ -90,14 +93,16 @@ class MessageService {
     return mapRow(row);
   };
 
-  deleteAfter = async (input: { sessionId: string; messageId: string }): Promise<void> => {
+  deleteAfter = async (input: { ref: SessionRef; messageId: string }): Promise<void> => {
     const db = await this.#database.getInstance();
 
     const target = await db
       .selectFrom('messages')
       .select('created_at')
       .where('id', '=', input.messageId)
-      .where('session_id', '=', input.sessionId)
+      .where('session_id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .executeTakeFirst();
 
     if (!target) {
@@ -106,18 +111,22 @@ class MessageService {
 
     await db
       .deleteFrom('messages')
-      .where('session_id', '=', input.sessionId)
+      .where('session_id', '=', input.ref.sessionId)
+      .where('repo_id', '=', input.ref.repoId)
+      .where('user_id', '=', input.ref.userId)
       .where('created_at', '>', target.created_at)
       .execute();
   };
 
-  listBySession = async (sessionId: string): Promise<Message[]> => {
+  listBySession = async (ref: SessionRef): Promise<Message[]> => {
     const db = await this.#database.getInstance();
 
     const rows = await db
       .selectFrom('messages')
       .selectAll()
-      .where('session_id', '=', sessionId)
+      .where('session_id', '=', ref.sessionId)
+      .where('repo_id', '=', ref.repoId)
+      .where('user_id', '=', ref.userId)
       .orderBy('created_at', 'asc')
       .execute();
 

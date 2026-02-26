@@ -48,7 +48,8 @@ type EnsureBareCloneInput = {
 
 type CreateWorktreeInput = {
   bareRepoPath: string;
-  sessionId: string;
+  worktreePath: string;
+  branchName: string;
   ref: string;
 };
 
@@ -243,21 +244,18 @@ class GitService {
   };
 
   createWorktree = async (input: CreateWorktreeInput): Promise<string> => {
-    const worktreePath = path.join(this.#dataDir, 'worktrees', input.sessionId);
-    const branchName = `session/${input.sessionId}`;
-
     try {
-      await mkdir(path.dirname(worktreePath), { recursive: true });
+      await mkdir(path.dirname(input.worktreePath), { recursive: true });
 
       const git = createGit(input.bareRepoPath);
-      await git.raw(['worktree', 'add', '-b', branchName, worktreePath, input.ref]);
+      await git.raw(['worktree', 'add', '-b', input.branchName, input.worktreePath, input.ref]);
 
       // Configure upstream so `git push` targets the original branch
-      const worktreeGit = createGit(worktreePath);
-      await worktreeGit.raw(['config', `branch.${branchName}.remote`, 'origin']);
-      await worktreeGit.raw(['config', `branch.${branchName}.merge`, `refs/heads/${input.ref}`]);
+      const worktreeGit = createGit(input.worktreePath);
+      await worktreeGit.raw(['config', `branch.${input.branchName}.remote`, 'origin']);
+      await worktreeGit.raw(['config', `branch.${input.branchName}.merge`, `refs/heads/${input.ref}`]);
 
-      return worktreePath;
+      return input.worktreePath;
     } catch (error) {
       throw new GitWorktreeError(
         error instanceof Error ? error.message : 'Worktree operation failed',

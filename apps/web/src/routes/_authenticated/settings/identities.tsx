@@ -17,6 +17,7 @@ const IdentitiesPage = (): React.ReactNode => {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [mode, setMode] = useState<'generate' | 'import'>('generate');
+  const [id, setId] = useState('');
   const [name, setName] = useState('');
   const [gitName, setGitName] = useState('');
   const [gitEmail, setGitEmail] = useState('');
@@ -40,6 +41,7 @@ const IdentitiesPage = (): React.ReactNode => {
       const { data, error } = await getClient().api.POST('/api/users/{userId}/identities', {
         params: { path: { userId: user.id } },
         body: {
+          id,
           name,
           gitAuthorName: gitName,
           gitAuthorEmail: gitEmail,
@@ -53,6 +55,7 @@ const IdentitiesPage = (): React.ReactNode => {
       void queryClient.invalidateQueries({ queryKey: ['identities'] });
       setShowCreate(false);
       setMode('generate');
+      setId('');
       setName('');
       setGitName('');
       setGitEmail('');
@@ -120,14 +123,26 @@ const IdentitiesPage = (): React.ReactNode => {
             </button>
           </div>
 
+          <div className="mb-3">
+            <Label>ID</Label>
+            <Input
+              required
+              value={id}
+              onChange={(e) => setId(e.target.value)}
+              placeholder="work"
+              pattern="^[a-z0-9][a-z0-9._-]*$"
+              title="Lowercase slug"
+            />
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <Label>Name</Label>
+              <Label>Display name</Label>
               <Input
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="work"
+                placeholder="Work"
               />
             </div>
             <div>
