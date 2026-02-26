@@ -34,7 +34,21 @@ type WsAuthOkMessage = {
   kind: 'auth:ok';
 };
 
-type WsServerMessage = WsSessionEventMessage | WsUserEventMessage | WsSyncMessage | WsAuthOkMessage;
+type WsTerminalOutputMessage = {
+  kind: 'terminal:output';
+  sessionId: string;
+  terminalId: string;
+  data: string;
+};
+
+type WsTerminalExitMessage = {
+  kind: 'terminal:exit';
+  sessionId: string;
+  terminalId: string;
+  exitCode: number;
+};
+
+type WsServerMessage = WsSessionEventMessage | WsUserEventMessage | WsSyncMessage | WsAuthOkMessage | WsTerminalOutputMessage | WsTerminalExitMessage;
 
 type WsAuthMessage = {
   type: 'auth';
@@ -52,7 +66,34 @@ type WsUnsubscribeMessage = {
   sessionId: string;
 };
 
-type WsClientMessage = WsAuthMessage | WsSubscribeMessage | WsUnsubscribeMessage;
+type WsTerminalSubscribeMessage = {
+  type: 'terminal:subscribe';
+  sessionId: string;
+  terminalId: string;
+};
+
+type WsTerminalUnsubscribeMessage = {
+  type: 'terminal:unsubscribe';
+  sessionId: string;
+  terminalId: string;
+};
+
+type WsTerminalInputMessage = {
+  type: 'terminal:input';
+  sessionId: string;
+  terminalId: string;
+  data: string;
+};
+
+type WsTerminalResizeMessage = {
+  type: 'terminal:resize';
+  sessionId: string;
+  terminalId: string;
+  cols: number;
+  rows: number;
+};
+
+type WsClientMessage = WsAuthMessage | WsSubscribeMessage | WsUnsubscribeMessage | WsTerminalSubscribeMessage | WsTerminalUnsubscribeMessage | WsTerminalInputMessage | WsTerminalResizeMessage;
 
 export type {
   SessionEvent,
@@ -62,8 +103,14 @@ export type {
   WsUserEventMessage,
   WsSyncMessage,
   WsAuthOkMessage,
+  WsTerminalOutputMessage,
+  WsTerminalExitMessage,
   WsClientMessage,
   WsAuthMessage,
   WsSubscribeMessage,
   WsUnsubscribeMessage,
+  WsTerminalSubscribeMessage,
+  WsTerminalUnsubscribeMessage,
+  WsTerminalInputMessage,
+  WsTerminalResizeMessage,
 };

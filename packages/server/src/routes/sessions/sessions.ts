@@ -9,6 +9,7 @@ import { sessionRef, SessionService, sessionKey } from '../../services/session/s
 import { SessionEventService } from '../../services/session-event/session-event.js';
 import { MessageService } from '../../services/message/message.js';
 import { startSession, sendSessionMessage, interruptSession, stopSession, revertSession } from '../../services/session/session.runner.js';
+import { TerminalService } from '../../services/terminal/terminal.js';
 import { EventBusService } from '../../sse/event-bus.js';
 import { streamSessionEvents } from '../../sse/stream.js';
 
@@ -152,6 +153,8 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
       });
       const ref = sessionRef(session);
       const key = sessionKey(ref);
+
+      app.services.get(TerminalService).killAllForSession(ref);
 
       const agentService = app.services.get(AgentService);
       try {

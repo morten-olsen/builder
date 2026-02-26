@@ -28,6 +28,7 @@ import { Route as AuthenticatedReposRepoIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsReposIndexRouteImport } from './routes/_authenticated/settings/repos.index'
 import { Route as AuthenticatedSessionsSessionIdIndexRouteImport } from './routes/_authenticated/sessions/$sessionId.index'
 import { Route as AuthenticatedSettingsReposRepoIdRouteImport } from './routes/_authenticated/settings/repos.$repoId'
+import { Route as AuthenticatedSessionsSessionIdTerminalRouteImport } from './routes/_authenticated/sessions/$sessionId.terminal'
 import { Route as AuthenticatedSessionsSessionIdReviewRouteImport } from './routes/_authenticated/sessions/$sessionId.review'
 
 const LoginRoute = LoginRouteImport.update({
@@ -134,6 +135,12 @@ const AuthenticatedSettingsReposRepoIdRoute =
     path: '/$repoId',
     getParentRoute: () => AuthenticatedSettingsReposRoute,
   } as any)
+const AuthenticatedSessionsSessionIdTerminalRoute =
+  AuthenticatedSessionsSessionIdTerminalRouteImport.update({
+    id: '/terminal',
+    path: '/terminal',
+    getParentRoute: () => AuthenticatedSessionsSessionIdRoute,
+  } as any)
 const AuthenticatedSessionsSessionIdReviewRoute =
   AuthenticatedSessionsSessionIdReviewRouteImport.update({
     id: '/review',
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/repos/': typeof AuthenticatedReposIndexRoute
   '/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/sessions/$sessionId/review': typeof AuthenticatedSessionsSessionIdReviewRoute
+  '/sessions/$sessionId/terminal': typeof AuthenticatedSessionsSessionIdTerminalRoute
   '/settings/repos/$repoId': typeof AuthenticatedSettingsReposRepoIdRoute
   '/sessions/$sessionId/': typeof AuthenticatedSessionsSessionIdIndexRoute
   '/settings/repos/': typeof AuthenticatedSettingsReposIndexRoute
@@ -175,6 +183,7 @@ export interface FileRoutesByTo {
   '/repos': typeof AuthenticatedReposIndexRoute
   '/sessions': typeof AuthenticatedSessionsIndexRoute
   '/sessions/$sessionId/review': typeof AuthenticatedSessionsSessionIdReviewRoute
+  '/sessions/$sessionId/terminal': typeof AuthenticatedSessionsSessionIdTerminalRoute
   '/settings/repos/$repoId': typeof AuthenticatedSettingsReposRepoIdRoute
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdIndexRoute
   '/settings/repos': typeof AuthenticatedSettingsReposIndexRoute
@@ -198,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/repos/': typeof AuthenticatedReposIndexRoute
   '/_authenticated/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/_authenticated/sessions/$sessionId/review': typeof AuthenticatedSessionsSessionIdReviewRoute
+  '/_authenticated/sessions/$sessionId/terminal': typeof AuthenticatedSessionsSessionIdTerminalRoute
   '/_authenticated/settings/repos/$repoId': typeof AuthenticatedSettingsReposRepoIdRoute
   '/_authenticated/sessions/$sessionId/': typeof AuthenticatedSessionsSessionIdIndexRoute
   '/_authenticated/settings/repos/': typeof AuthenticatedSettingsReposIndexRoute
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/repos/'
     | '/sessions/'
     | '/sessions/$sessionId/review'
+    | '/sessions/$sessionId/terminal'
     | '/settings/repos/$repoId'
     | '/sessions/$sessionId/'
     | '/settings/repos/'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/repos'
     | '/sessions'
     | '/sessions/$sessionId/review'
+    | '/sessions/$sessionId/terminal'
     | '/settings/repos/$repoId'
     | '/sessions/$sessionId'
     | '/settings/repos'
@@ -260,6 +272,7 @@ export interface FileRouteTypes {
     | '/_authenticated/repos/'
     | '/_authenticated/sessions/'
     | '/_authenticated/sessions/$sessionId/review'
+    | '/_authenticated/sessions/$sessionId/terminal'
     | '/_authenticated/settings/repos/$repoId'
     | '/_authenticated/sessions/$sessionId/'
     | '/_authenticated/settings/repos/'
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsReposRepoIdRouteImport
       parentRoute: typeof AuthenticatedSettingsReposRoute
     }
+    '/_authenticated/sessions/$sessionId/terminal': {
+      id: '/_authenticated/sessions/$sessionId/terminal'
+      path: '/terminal'
+      fullPath: '/sessions/$sessionId/terminal'
+      preLoaderRoute: typeof AuthenticatedSessionsSessionIdTerminalRouteImport
+      parentRoute: typeof AuthenticatedSessionsSessionIdRoute
+    }
     '/_authenticated/sessions/$sessionId/review': {
       id: '/_authenticated/sessions/$sessionId/review'
       path: '/review'
@@ -430,6 +450,7 @@ const AuthenticatedReposRouteWithChildren =
 
 interface AuthenticatedSessionsSessionIdRouteChildren {
   AuthenticatedSessionsSessionIdReviewRoute: typeof AuthenticatedSessionsSessionIdReviewRoute
+  AuthenticatedSessionsSessionIdTerminalRoute: typeof AuthenticatedSessionsSessionIdTerminalRoute
   AuthenticatedSessionsSessionIdIndexRoute: typeof AuthenticatedSessionsSessionIdIndexRoute
 }
 
@@ -437,6 +458,8 @@ const AuthenticatedSessionsSessionIdRouteChildren: AuthenticatedSessionsSessionI
   {
     AuthenticatedSessionsSessionIdReviewRoute:
       AuthenticatedSessionsSessionIdReviewRoute,
+    AuthenticatedSessionsSessionIdTerminalRoute:
+      AuthenticatedSessionsSessionIdTerminalRoute,
     AuthenticatedSessionsSessionIdIndexRoute:
       AuthenticatedSessionsSessionIdIndexRoute,
   }

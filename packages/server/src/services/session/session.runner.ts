@@ -400,4 +400,4 @@ const revertSession = async (services: Services, ref: SessionRef, messageId: str
   });
 };
 
-export { startSession, sendSessionMessage, interruptSession, stopSession, revertSession };
+export { worktreePath, startSession, sendSessionMessage, interruptSession, stopSession, revertSession };

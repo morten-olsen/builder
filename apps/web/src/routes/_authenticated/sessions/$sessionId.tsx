@@ -182,8 +182,9 @@ const ModelSelector = ({ sessionId, provider, currentModel }: ModelSelectorProps
 };
 
 const tabs = [
-  { to: '/sessions/$sessionId' as const, label: 'build', exact: true },
-  { to: '/sessions/$sessionId/review' as const, label: 'review' },
+  { to: '/sessions/$sessionId' as const, label: 'build', match: 'build' as const },
+  { to: '/sessions/$sessionId/review' as const, label: 'review', match: 'review' as const },
+  { to: '/sessions/$sessionId/terminal' as const, label: 'terminal', match: 'terminal' as const },
 ];
 
 const SessionLayout = (): React.ReactNode => {
@@ -296,9 +297,9 @@ const SessionLayout = (): React.ReactNode => {
         )}
         <div className="mt-2 flex gap-0">
           {tabs.map((tab) => {
-            const isActive = tab.exact
-              ? !lastMatchId.includes('/review')
-              : lastMatchId.includes('/review');
+            const isActive = tab.match === 'build'
+              ? !lastMatchId.includes('/review') && !lastMatchId.includes('/terminal')
+              : lastMatchId.includes(`/${tab.match}`);
 
             return (
               <Link

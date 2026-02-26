@@ -19,6 +19,8 @@ type WebSocketCallbacks = {
   onSessionEvent: (sessionId: string, event: SequencedSessionEvent) => void;
   onUserEvent: (event: UserEvent) => void;
   onSync: (sessionId: string, lastSequence: number) => void;
+  onTerminalOutput?: (sessionId: string, terminalId: string, data: string) => void;
+  onTerminalExit?: (sessionId: string, terminalId: string, exitCode: number) => void;
   onOpen?: () => void;
   onClose?: () => void;
   onError?: (error: Event) => void;
@@ -27,6 +29,10 @@ type WebSocketCallbacks = {
 type WebSocketConnection = {
   subscribe: (sessionId: string, afterSequence?: number) => void;
   unsubscribe: (sessionId: string) => void;
+  terminalSubscribe: (sessionId: string, terminalId: string) => void;
+  terminalUnsubscribe: (sessionId: string, terminalId: string) => void;
+  terminalInput: (sessionId: string, terminalId: string, data: string) => void;
+  terminalResize: (sessionId: string, terminalId: string, cols: number, rows: number) => void;
   close: () => void;
 };
 
@@ -110,6 +116,12 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
           case 'sync':
             callbacks.onSync(message.sessionId, message.lastSequence);
             break;
+          case 'terminal:output':
+            callbacks.onTerminalOutput?.(message.sessionId, message.terminalId, message.data);
+            break;
+          case 'terminal:exit':
+            callbacks.onTerminalExit?.(message.sessionId, message.terminalId, message.exitCode);
+            break;
         }
       } catch {
         // Ignore malformed messages
@@ -138,11 +150,27 @@ const createBuilderClient = (options: ClientOptions): BuilderClient => {
       sendMessage({ type: 'unsubscribe', sessionId });
     };
 
+    const terminalSubscribe = (sessionId: string, terminalId: string): void => {
+      sendMessage({ type: 'terminal:subscribe', sessionId, terminalId });
+    };
+
+    const terminalUnsubscribe = (sessionId: string, terminalId: string): void => {
+      sendMessage({ type: 'terminal:unsubscribe', sessionId, terminalId });
+    };
+
+    const terminalInput = (sessionId: string, terminalId: string, data: string): void => {
+      sendMessage({ type: 'terminal:input', sessionId, terminalId, data });
+    };
+
+    const terminalResize = (sessionId: string, terminalId: string, cols: number, rows: number): void => {
+      sendMessage({ type: 'terminal:resize', sessionId, terminalId, cols, rows });
+    };
+
     const close = (): void => {
       ws.close();
     };
 
-    return { subscribe, unsubscribe, close };
+    return { subscribe, unsubscribe, terminalSubscribe, terminalUnsubscribe, terminalInput, terminalResize, close };
   };
 
   const streamEvents = async (

@@ -8,6 +8,7 @@ import { registerSessionRoutes } from '../routes/sessions/sessions.js';
 import { registerReviewRoutes } from '../routes/sessions/sessions.review.js';
 import { registerModelRoutes } from '../routes/models/models.js';
 import { registerNotificationRoutes } from '../routes/notifications/notifications.js';
+import { registerTerminalRoutes } from '../routes/terminals/terminals.js';
 import { registerWsRoutes } from '../routes/ws/ws.js';
 
 const registerAllRoutes = (app: FastifyInstance): void => {
@@ -19,6 +20,7 @@ const registerAllRoutes = (app: FastifyInstance): void => {
   registerReviewRoutes(app);
   registerModelRoutes(app);
   registerNotificationRoutes(app);
+  registerTerminalRoutes(app);
   registerWsRoutes(app);
 };
 

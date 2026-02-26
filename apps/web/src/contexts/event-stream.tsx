@@ -8,6 +8,9 @@ type SessionEventEntry = SequencedSessionEvent & {
   id: number;
 };
 
+type TerminalOutputListener = (sessionId: string, terminalId: string, data: string) => void;
+type TerminalExitListener = (sessionId: string, terminalId: string, exitCode: number) => void;
+
 type EventStreamContextValue = {
   subscribeSession: (sessionId: string) => void;
   unsubscribeSession: (sessionId: string) => void;
@@ -15,6 +18,12 @@ type EventStreamContextValue = {
   isSynced: boolean;
   isConnected: boolean;
   resetSession: () => void;
+  terminalSubscribe: (sessionId: string, terminalId: string) => void;
+  terminalUnsubscribe: (sessionId: string, terminalId: string) => void;
+  terminalInput: (sessionId: string, terminalId: string, data: string) => void;
+  terminalResize: (sessionId: string, terminalId: string, cols: number, rows: number) => void;
+  addTerminalOutputListener: (listener: TerminalOutputListener) => () => void;
+  addTerminalExitListener: (listener: TerminalExitListener) => () => void;
 };
 
 const EventStreamContext = createContext<EventStreamContextValue | null>(null);
@@ -38,6 +47,9 @@ const EventStreamProvider = ({ children }: EventStreamProviderProps): React.Reac
   const seenSequencesRef = useRef(new Set<number>());
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const terminalOutputListenersRef = useRef(new Set<TerminalOutputListener>());
+  const terminalExitListenersRef = useRef(new Set<TerminalExitListener>());
+  const activeTerminalSubsRef = useRef(new Set<string>());
 
   const clearReconnectTimer = useCallback((): void => {
     if (reconnectTimerRef.current) {
@@ -88,6 +100,16 @@ const EventStreamProvider = ({ children }: EventStreamProviderProps): React.Reac
         if (sessionId !== activeSessionRef.current) return;
         setIsSynced(true);
       },
+      onTerminalOutput: (sessionId, terminalId, data) => {
+        for (const listener of terminalOutputListenersRef.current) {
+          listener(sessionId, terminalId, data);
+        }
+      },
+      onTerminalExit: (sessionId, terminalId, exitCode) => {
+        for (const listener of terminalExitListenersRef.current) {
+          listener(sessionId, terminalId, exitCode);
+        }
+      },
       onOpen: () => {
         setIsConnected(true);
         // Re-subscribe to active session after reconnect
@@ -95,8 +117,15 @@ const EventStreamProvider = ({ children }: EventStreamProviderProps): React.Reac
         if (sessionId) {
           ws.subscribe(sessionId, lastSequenceRef.current > 0 ? lastSequenceRef.current : undefined);
         }
+        // Re-subscribe to active terminal subscriptions
+        for (const key of activeTerminalSubsRef.current) {
+          const sep = key.indexOf('/');
+          ws.terminalSubscribe(key.slice(0, sep), key.slice(sep + 1));
+        }
       },
       onClose: () => {
+        // Ignore close events from stale WebSocket connections (e.g. StrictMode double-mount)
+        if (wsRef.current !== ws) return;
         setIsConnected(false);
         if (mountedRef.current) {
           reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY);
@@ -140,6 +169,38 @@ const EventStreamProvider = ({ children }: EventStreamProviderProps): React.Reac
     wsRef.current?.subscribe(sessionId, 0);
   }, [resetSessionState]);
 
+  const terminalSubscribe = useCallback((sessionId: string, terminalId: string): void => {
+    activeTerminalSubsRef.current.add(`${sessionId}/${terminalId}`);
+    wsRef.current?.terminalSubscribe(sessionId, terminalId);
+  }, []);
+
+  const terminalUnsubscribe = useCallback((sessionId: string, terminalId: string): void => {
+    activeTerminalSubsRef.current.delete(`${sessionId}/${terminalId}`);
+    wsRef.current?.terminalUnsubscribe(sessionId, terminalId);
+  }, []);
+
+  const terminalInput = useCallback((sessionId: string, terminalId: string, data: string): void => {
+    wsRef.current?.terminalInput(sessionId, terminalId, data);
+  }, []);
+
+  const terminalResize = useCallback((sessionId: string, terminalId: string, cols: number, rows: number): void => {
+    wsRef.current?.terminalResize(sessionId, terminalId, cols, rows);
+  }, []);
+
+  const addTerminalOutputListener = useCallback((listener: TerminalOutputListener): (() => void) => {
+    terminalOutputListenersRef.current.add(listener);
+    return () => {
+      terminalOutputListenersRef.current.delete(listener);
+    };
+  }, []);
+
+  const addTerminalExitListener = useCallback((listener: TerminalExitListener): (() => void) => {
+    terminalExitListenersRef.current.add(listener);
+    return () => {
+      terminalExitListenersRef.current.delete(listener);
+    };
+  }, []);
+
   return (
     <EventStreamContext.Provider
       value={{
@@ -149,6 +210,12 @@ const EventStreamProvider = ({ children }: EventStreamProviderProps): React.Reac
         isSynced,
         isConnected,
         resetSession,
+        terminalSubscribe,
+        terminalUnsubscribe,
+        terminalInput,
+        terminalResize,
+        addTerminalOutputListener,
+        addTerminalExitListener,
       }}
     >
       {children}
@@ -162,5 +229,5 @@ const useEventStream = (): EventStreamContextValue => {
   return ctx;
 };
 
-export type { SessionEventEntry, EventStreamContextValue };
+export type { SessionEventEntry, EventStreamContextValue, TerminalOutputListener, TerminalExitListener };
 export { EventStreamProvider, useEventStream };

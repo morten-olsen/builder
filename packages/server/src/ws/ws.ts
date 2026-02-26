@@ -8,6 +8,7 @@ import type { SessionEvent, UserEvent } from '../sse/event-bus.js';
 import { SessionEventService } from '../services/session-event/session-event.js';
 import type { SessionRef } from '../services/session/session.js';
 import { sessionRef, SessionService } from '../services/session/session.js';
+import { TerminalService } from '../services/terminal/terminal.js';
 
 const authMessageSchema = z.object({
   type: z.literal('auth'),
@@ -25,9 +26,40 @@ const unsubscribeMessageSchema = z.object({
   sessionId: z.string(),
 });
 
+const terminalSubscribeMessageSchema = z.object({
+  type: z.literal('terminal:subscribe'),
+  sessionId: z.string(),
+  terminalId: z.string(),
+});
+
+const terminalUnsubscribeMessageSchema = z.object({
+  type: z.literal('terminal:unsubscribe'),
+  sessionId: z.string(),
+  terminalId: z.string(),
+});
+
+const terminalInputMessageSchema = z.object({
+  type: z.literal('terminal:input'),
+  sessionId: z.string(),
+  terminalId: z.string(),
+  data: z.string(),
+});
+
+const terminalResizeMessageSchema = z.object({
+  type: z.literal('terminal:resize'),
+  sessionId: z.string(),
+  terminalId: z.string(),
+  cols: z.number().int().min(1),
+  rows: z.number().int().min(1),
+});
+
 const clientMessageSchema = z.discriminatedUnion('type', [
   subscribeMessageSchema,
   unsubscribeMessageSchema,
+  terminalSubscribeMessageSchema,
+  terminalUnsubscribeMessageSchema,
+  terminalInputMessageSchema,
+  terminalResizeMessageSchema,
 ]);
 
 type WsSessionEvent = {
@@ -52,7 +84,21 @@ type WsAuthOk = {
   kind: 'auth:ok';
 };
 
-type WsServerMessage = WsSessionEvent | WsUserEvent | WsSyncEvent | WsAuthOk;
+type WsTerminalOutput = {
+  kind: 'terminal:output';
+  sessionId: string;
+  terminalId: string;
+  data: string;
+};
+
+type WsTerminalExit = {
+  kind: 'terminal:exit';
+  sessionId: string;
+  terminalId: string;
+  exitCode: number;
+};
+
+type WsServerMessage = WsSessionEvent | WsUserEvent | WsSyncEvent | WsAuthOk | WsTerminalOutput | WsTerminalExit;
 
 type HandleWebSocketInput = {
   socket: WebSocket;
@@ -65,8 +111,10 @@ const setupAuthenticatedSocket = (socket: WebSocket, userId: string, services: S
   const eventBus = services.get(EventBusService);
   const sessionEventService = services.get(SessionEventService);
   const sessionService = services.get(SessionService);
+  const terminalService = services.get(TerminalService);
 
   const subscriptions = new Map<string, () => void>();
+  const terminalSubscriptions = new Map<string, (() => void)[]>();
 
   const send = (message: WsServerMessage): void => {
     if (socket.readyState === socket.OPEN) {
@@ -132,6 +180,81 @@ const setupAuthenticatedSocket = (socket: WebSocket, userId: string, services: S
     subscriptions.delete(sessionId);
   };
 
+  const termSubKey = (sessionId: string, terminalId: string): string =>
+    `${sessionId}/${terminalId}`;
+
+  const handleTerminalSubscribe = async (sessionId: string, terminalId: string): Promise<void> => {
+    let ref: SessionRef;
+    try {
+      const session = await sessionService.get({ userId, sessionId });
+      ref = sessionRef(session);
+    } catch {
+      return;
+    }
+
+    const key = termSubKey(sessionId, terminalId);
+    const existing = terminalSubscriptions.get(key);
+    if (existing) {
+      for (const unsub of existing) unsub();
+    }
+
+    try {
+      const unsubData = terminalService.onData(ref, terminalId, (data) => {
+        send({ kind: 'terminal:output', sessionId, terminalId, data });
+      });
+
+      const unsubExit = terminalService.onExit(ref, terminalId, (exitCode) => {
+        send({ kind: 'terminal:exit', sessionId, terminalId, exitCode });
+        terminalSubscriptions.delete(key);
+      });
+
+      terminalSubscriptions.set(key, [unsubData, unsubExit]);
+    } catch {
+      // Terminal may not exist yet
+    }
+  };
+
+  const handleTerminalUnsubscribe = (sessionId: string, terminalId: string): void => {
+    const key = termSubKey(sessionId, terminalId);
+    const unsubs = terminalSubscriptions.get(key);
+    if (unsubs) {
+      for (const unsub of unsubs) unsub();
+      terminalSubscriptions.delete(key);
+    }
+  };
+
+  const handleTerminalInput = async (sessionId: string, terminalId: string, data: string): Promise<void> => {
+    let ref: SessionRef;
+    try {
+      const session = await sessionService.get({ userId, sessionId });
+      ref = sessionRef(session);
+    } catch {
+      return;
+    }
+
+    try {
+      terminalService.write(ref, terminalId, data);
+    } catch {
+      // Terminal may not exist
+    }
+  };
+
+  const handleTerminalResize = async (sessionId: string, terminalId: string, cols: number, rows: number): Promise<void> => {
+    let ref: SessionRef;
+    try {
+      const session = await sessionService.get({ userId, sessionId });
+      ref = sessionRef(session);
+    } catch {
+      return;
+    }
+
+    try {
+      terminalService.resize(ref, terminalId, cols, rows);
+    } catch {
+      // Terminal may not exist
+    }
+  };
+
   socket.on('message', (data: RawData) => {
     try {
       const parsed: unknown = JSON.parse(String(data));
@@ -144,9 +267,21 @@ const setupAuthenticatedSocket = (socket: WebSocket, userId: string, services: S
         case 'unsubscribe':
           handleUnsubscribe(message.sessionId);
           break;
+        case 'terminal:subscribe':
+          handleTerminalSubscribe(message.sessionId, message.terminalId).catch(() => undefined);
+          break;
+        case 'terminal:unsubscribe':
+          handleTerminalUnsubscribe(message.sessionId, message.terminalId);
+          break;
+        case 'terminal:input':
+          handleTerminalInput(message.sessionId, message.terminalId, message.data).catch(() => undefined);
+          break;
+        case 'terminal:resize':
+          handleTerminalResize(message.sessionId, message.terminalId, message.cols, message.rows).catch(() => undefined);
+          break;
       }
-    } catch {
-      // Ignore malformed messages
+    } catch (error) {
+      console.error('[ws] message parse error:', error);
     }
   });
 
@@ -156,6 +291,10 @@ const setupAuthenticatedSocket = (socket: WebSocket, userId: string, services: S
       unsubscribe();
     }
     subscriptions.clear();
+    for (const unsubs of terminalSubscriptions.values()) {
+      for (const unsub of unsubs) unsub();
+    }
+    terminalSubscriptions.clear();
   });
 };
 
@@ -195,5 +334,5 @@ const handleWebSocket = (input: HandleWebSocketInput): void => {
   });
 };
 
-export type { WsServerMessage, WsSessionEvent, WsUserEvent, WsSyncEvent, WsAuthOk, HandleWebSocketInput };
+export type { WsServerMessage, WsSessionEvent, WsUserEvent, WsSyncEvent, WsAuthOk, WsTerminalOutput, WsTerminalExit, HandleWebSocketInput };
 export { handleWebSocket };
