@@ -11,7 +11,7 @@ const customStyle: Record<string, React.CSSProperties> = {
   ...oneDark,
   'pre[class*="language-"]': {
     ...(oneDark['pre[class*="language-"]'] as React.CSSProperties | undefined),
-    background: '#1a1a1a',
+    background: '#0d1218',
     margin: 0,
     borderRadius: '0.375rem',
     fontSize: '0.75rem',

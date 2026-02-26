@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { Query, SDKMessage, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 
@@ -11,6 +13,15 @@ type SessionState = {
   abortController: AbortController;
 };
 
+/** The SDK requires a valid UUID for sessionId/resume. Derive one deterministically from the session key via UUID v5. */
+const toSessionUUID = (key: string): string => {
+  const hash = crypto.createHash('sha1').update(key).digest();
+  hash[6] = (hash[6]! & 0x0f) | 0x50;
+  hash[8] = (hash[8]! & 0x3f) | 0x80;
+  const hex = hash.toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+};
+
 const createClaudeAgentProvider = (apiKey: string, model: string): AgentProvider => {
   const sessions = new Map<string, SessionState>();
 
@@ -21,21 +32,23 @@ const createClaudeAgentProvider = (apiKey: string, model: string): AgentProvider
       input.abortSignal.addEventListener('abort', () => abortController.abort());
     }
 
-    const { CLAUDECODE: _nested, ...parentEnv } = process.env;
+    const { CLAUDECODE: _nested, CLAUDE_CODE_ENTRYPOINT: _entrypoint, ...parentEnv } = process.env;
     const env = apiKey ? { ...parentEnv, ANTHROPIC_API_KEY: apiKey } : { ...parentEnv };
 
     const queue = createMessageQueue<SDKUserMessage>();
+
+    const sdkSessionId = toSessionUUID(input.sessionId);
 
     queue.push({
       type: 'user',
       message: { role: 'user', content: input.prompt },
       parent_tool_use_id: null,
-      session_id: input.sessionId,
+      session_id: sdkSessionId,
     });
 
     const sessionOptions = input.resume
-      ? { resume: input.sessionId }
-      : { sessionId: input.sessionId };
+      ? { resume: sdkSessionId }
+      : { sessionId: sdkSessionId };
 
     const q = query({
       prompt: queue,
@@ -86,7 +99,7 @@ const createClaudeAgentProvider = (apiKey: string, model: string): AgentProvider
       type: 'user',
       message: { role: 'user', content: input.message },
       parent_tool_use_id: null,
-      session_id: input.sessionId,
+      session_id: toSessionUUID(input.sessionId),
     });
   };
 

@@ -12,30 +12,7 @@ import {
 import type { Config } from '../config/config.js';
 import type { Services } from '../container/container.js';
 import { AuthService } from '../services/auth/auth.js';
-import { AuthError, InvalidCredentialsError, InvalidTokenError, UserNotFoundError } from '../services/auth/auth.errors.js';
-import { AgentError } from '../services/agent/agent.errors.js';
-import { GitError } from '../services/git/git.errors.js';
-import {
-  IdentityError,
-  IdentityForbiddenError,
-  IdentityNotFoundError,
-} from '../services/identity/identity.errors.js';
-import {
-  RepoError,
-  RepoForbiddenError,
-  RepoNotFoundError,
-} from '../services/repo/repo.errors.js';
-import {
-  SessionError,
-  SessionForbiddenError,
-  SessionNotFoundError,
-} from '../services/session/session.errors.js';
-import {
-  NotificationError,
-  NotificationChannelNotFoundError,
-  NotificationForbiddenError,
-  NotificationProviderNotFoundError,
-} from '../services/notification/notification.errors.js';
+import { AppError } from '../errors/errors.js';
 
 import './app.types.js';
 
@@ -105,92 +82,12 @@ const createApp = async (input: CreateAppInput) => {
       return;
     }
 
-    if (error instanceof InvalidCredentialsError || error instanceof InvalidTokenError) {
-      reply.code(401).send({ error: error.message });
+    if (error instanceof AppError) {
+      reply.code(error.statusCode).send({ error: error.message });
       return;
     }
 
-    if (error instanceof UserNotFoundError) {
-      reply.code(404).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof AuthError) {
-      reply.code(409).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof IdentityNotFoundError) {
-      reply.code(404).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof IdentityForbiddenError) {
-      reply.code(403).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof IdentityError) {
-      reply.code(400).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof RepoNotFoundError) {
-      reply.code(404).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof RepoForbiddenError) {
-      reply.code(403).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof RepoError) {
-      reply.code(400).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof SessionNotFoundError) {
-      reply.code(404).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof SessionForbiddenError) {
-      reply.code(403).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof SessionError) {
-      reply.code(400).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof NotificationChannelNotFoundError || error instanceof NotificationProviderNotFoundError) {
-      reply.code(404).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof NotificationForbiddenError) {
-      reply.code(403).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof NotificationError) {
-      reply.code(400).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof GitError) {
-      reply.code(502).send({ error: error.message });
-      return;
-    }
-
-    if (error instanceof AgentError) {
-      reply.code(500).send({ error: error.message });
-      return;
-    }
-
-    app.log.error(error);
+    console.error('Unhandled error:', error);
     reply.code(500).send({ error: 'Internal server error' });
   });
 

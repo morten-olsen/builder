@@ -1,7 +1,7 @@
 import type { Services } from '../../container/container.js';
 import { DatabaseService } from '../database/database.js';
 
-import { SessionNotFoundError } from './session.errors.js';
+import { SessionAlreadyExistsError, SessionNotFoundError } from './session.errors.js';
 
 type SessionRef = {
   userId: string;
@@ -96,23 +96,30 @@ class SessionService {
     const db = await this.#database.getInstance();
     const now = new Date().toISOString();
 
-    await db
-      .insertInto('sessions')
-      .values({
-        id: input.id,
-        user_id: input.userId,
-        repo_id: input.repoId,
-        identity_id: input.identityId,
-        repo_url: input.repoUrl,
-        branch: input.branch,
-        prompt: input.prompt,
-        status: 'pending',
-        error: null,
-        model: input.model ?? null,
-        created_at: now,
-        updated_at: now,
-      })
-      .execute();
+    try {
+      await db
+        .insertInto('sessions')
+        .values({
+          id: input.id,
+          user_id: input.userId,
+          repo_id: input.repoId,
+          identity_id: input.identityId,
+          repo_url: input.repoUrl,
+          branch: input.branch,
+          prompt: input.prompt,
+          status: 'pending',
+          error: null,
+          model: input.model ?? null,
+          created_at: now,
+          updated_at: now,
+        })
+        .execute();
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+        throw new SessionAlreadyExistsError();
+      }
+      throw error;
+    }
 
     return {
       id: input.id,

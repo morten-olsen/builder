@@ -5,11 +5,9 @@ import { z } from 'zod';
 import type { AuthTokenPayload } from '../../services/auth/auth.js';
 import { AgentService } from '../../services/agent/agent.js';
 import { RepoService } from '../../services/repo/repo.js';
-import type { SessionRef } from '../../services/session/session.js';
-import { sessionRef, SessionService } from '../../services/session/session.js';
+import { sessionRef, SessionService, sessionKey } from '../../services/session/session.js';
 import { SessionEventService } from '../../services/session-event/session-event.js';
 import { MessageService } from '../../services/message/message.js';
-import { sessionKey } from '../../services/session/session.js';
 import { startSession, sendSessionMessage, interruptSession, stopSession, revertSession } from '../../services/session/session.runner.js';
 import { EventBusService } from '../../sse/event-bus.js';
 import { streamSessionEvents } from '../../sse/stream.js';
@@ -45,6 +43,7 @@ const registerSessionRoutes = (app: FastifyInstance): void => {
         201: sessionResponseSchema,
         400: errorResponseSchema,
         401: errorResponseSchema,
+        409: errorResponseSchema,
       },
       security: [{ bearerAuth: [] }],
     },

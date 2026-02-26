@@ -33,8 +33,8 @@ const SidebarSessionItem = ({
     <div
       className={`mx-1 flex items-start gap-2 rounded px-2 py-1.5 transition-colors ${
         isActive
-          ? 'bg-accent-subtle text-accent-bright'
-          : 'text-text-dim hover:bg-surface-2 hover:text-text-base'
+          ? 'border-l-2 border-accent bg-accent-subtle text-accent-bright'
+          : 'border-l-2 border-transparent text-text-dim hover:bg-surface-2 hover:text-text-base'
       }`}
     >
       <Link

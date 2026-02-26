@@ -1,37 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Instrument Sans', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-sans: 'Barlow', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-condensed: 'Barlow Condensed', 'Barlow', sans-serif;
 
-  --color-surface-0: #0c0c0c;
-  --color-surface-1: #141414;
-  --color-surface-2: #1e1e1e;
-  --color-surface-3: #282828;
-  --color-surface-4: #333333;
+  --color-surface-0: #0a0e14;
+  --color-surface-1: #0f1319;
+  --color-surface-2: #161b23;
+  --color-surface-3: #1e2530;
+  --color-surface-4: #272d36;
 
-  --color-border-dim: #222222;
-  --color-border-base: #2e2e2e;
-  --color-border-bright: #444444;
+  --color-border-dim: #1a1f27;
+  --color-border-base: #252b35;
+  --color-border-bright: #3a4250;
 
-  --color-text-muted: #666666;
-  --color-text-dim: #888888;
-  --color-text-base: #b0b0b0;
-  --color-text-bright: #e0e0e0;
-  --color-text-max: #f5f5f0;
+  --color-text-muted: #4a5568;
+  --color-text-dim: #7b8a9e;
+  --color-text-base: #b0bdd0;
+  --color-text-bright: #d8e0ec;
+  --color-text-max: #ecf0f5;
 
-  --color-accent: #d4a054;
-  --color-accent-dim: #a07838;
-  --color-accent-bright: #e8b86a;
-  --color-accent-subtle: rgba(212, 160, 84, 0.08);
-  --color-accent-muted: rgba(212, 160, 84, 0.15);
+  --color-accent: #00e5ff;
+  --color-accent-dim: #00b8d4;
+  --color-accent-bright: #40efff;
+  --color-accent-subtle: rgba(0, 229, 255, 0.06);
+  --color-accent-muted: rgba(0, 229, 255, 0.12);
 
-  --color-danger: #c45c5c;
-  --color-danger-dim: #a04444;
-  --color-success: #5c9a5c;
-  --color-info: #5c7ea0;
-  --color-warning: #c4a05c;
+  --color-danger: #ef5350;
+  --color-danger-dim: #d32f2f;
+  --color-success: #2dd4a0;
+  --color-info: #5c9ee0;
+  --color-warning: #e8a040;
 }
 
 * {
@@ -45,10 +46,14 @@ body {
   color: var(--color-text-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 ::selection {
-  background-color: var(--color-accent-muted);
+  background-color: rgba(0, 229, 255, 0.25);
   color: var(--color-text-max);
 }
 
@@ -64,6 +69,14 @@ body {
   line-height: 0.875rem;
 }
 
+/* Condensed headings */
+@utility text-header {
+  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* Activity indicator shimmer */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
@@ -74,4 +87,40 @@ body {
 @keyframes pulse-dot {
   0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
   40% { opacity: 1; transform: scale(1); }
+}
+
+/* Radar-ping: expands and fades out */
+@keyframes radar-ping {
+  0% { transform: scale(1); opacity: 0.75; }
+  75%, 100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Scan-line sweep */
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Staggered card entrance */
+@keyframes stagger-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Transmitting signal bars */
+@keyframes transmit {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+/* ECG heartbeat trace */
+@keyframes ecg-trace {
+  0% { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Heartbeat pulse */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
 }

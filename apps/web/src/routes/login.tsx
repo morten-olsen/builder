@@ -40,8 +40,11 @@ const LoginPage = (): React.ReactNode => {
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-3 w-3 items-center justify-center rounded-full bg-accent" />
-          <h1 className="font-mono text-lg font-medium tracking-wide text-text-bright">builder</h1>
+          <div className="relative mx-auto mb-3 flex h-8 w-8 items-center justify-center">
+            <div className="absolute inset-0 rotate-45 rounded-sm border border-accent/50" />
+            <div className="h-2 w-2 rounded-full bg-accent" />
+          </div>
+          <h1 className="font-condensed text-lg font-semibold uppercase tracking-widest text-text-bright">Builder</h1>
           <p className="mt-1 font-mono text-xs text-text-muted">coding agent orchestrator</p>
         </div>
 

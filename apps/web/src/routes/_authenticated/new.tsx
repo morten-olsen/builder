@@ -90,7 +90,7 @@ const NewSessionPage = (): React.ReactNode => {
 
   return (
     <div className="p-3 lg:p-5">
-      <h1 className="mb-4 font-mono text-base font-medium text-text-bright">New Session</h1>
+      <h1 className="mb-4 font-condensed text-base font-semibold uppercase tracking-wider text-text-bright">New Session</h1>
 
       <form
         onSubmit={handleSubmit}

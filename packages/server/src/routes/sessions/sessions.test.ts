@@ -151,6 +151,25 @@ describe('session routes', () => {
       expect(response.statusCode).toBe(401);
     });
 
+    it('returns 409 for duplicate session id', async () => {
+      await app.inject({
+        method: 'POST',
+        url: '/api/sessions',
+        headers: authHeader(),
+        payload: { id: 'dup-session', repoId, prompt: 'First' },
+      });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/sessions',
+        headers: authHeader(),
+        payload: { id: 'dup-session', repoId, prompt: 'Second' },
+      });
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json().error).toBe('Session already exists');
+    });
+
     it('returns 400 for missing fields', async () => {
       const response = await app.inject({
         method: 'POST',

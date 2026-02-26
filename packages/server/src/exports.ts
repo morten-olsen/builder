@@ -1,3 +1,5 @@
+export { AppError } from './errors/errors.js';
+
 export type { Config } from './config/config.js';
 export { configSchema, createConfig } from './config/config.js';
 
@@ -114,6 +116,7 @@ export type { SessionRef, Session, CreateSessionInput, UpdateSessionStatusInput 
 export { sessionKey, sessionRef, SessionService } from './services/session/session.js';
 export {
   SessionError,
+  SessionAlreadyExistsError,
   SessionNotFoundError,
   SessionForbiddenError,
 } from './services/session/session.errors.js';

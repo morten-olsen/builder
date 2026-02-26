@@ -114,7 +114,7 @@ const SessionEventList = ({
   }, [events]);
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto bg-surface-0 p-3">
+    <div ref={containerRef} className="relative flex-1 overflow-y-auto bg-surface-0 p-3">
       {!isSynced && !isLoading && (
         <div className="py-12 text-center font-mono text-xs text-text-muted">connecting...</div>
       )}
@@ -154,17 +154,28 @@ const SessionEventList = ({
         })}
       </div>
       {status === 'running' && events.length > 0 && (
-        <div className="flex items-center gap-1.5 px-2 py-3">
-          {[0, 1, 2].map((i) => (
+        <div className="flex items-end gap-0.5 px-2 py-3">
+          {[0, 1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-1.5 w-1.5 rounded-full bg-accent"
-              style={{ animation: `pulse-dot 1.4s ease-in-out ${i * 0.2}s infinite` }}
+              className="w-1 rounded-sm bg-accent"
+              style={{
+                height: `${6 + i * 3}px`,
+                animation: `transmit 1.2s ease-in-out ${i * 0.15}s infinite`,
+              }}
             />
           ))}
+          <span className="ml-2 font-mono text-ui text-accent/60">transmitting...</span>
         </div>
       )}
       <div ref={endRef} />
+      {/* Scan-line overlay */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px)',
+        }}
+      />
     </div>
   );
 };

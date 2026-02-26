@@ -11,7 +11,7 @@ type ButtonProps = {
 
 const variantStyles: Record<ButtonVariant, string | Record<GhostColor, string>> = {
   primary:
-    'bg-accent text-surface-0 font-medium hover:bg-accent-bright focus:ring-1 focus:ring-accent disabled:opacity-40',
+    'bg-accent text-surface-0 font-medium hover:bg-accent-bright hover:shadow-[0_0_12px_rgba(0,229,255,0.25)] focus:ring-1 focus:ring-accent disabled:opacity-40',
   secondary:
     'border border-accent/30 bg-accent-subtle text-accent hover:border-accent/50 hover:bg-accent-muted disabled:opacity-40',
   ghost: {
@@ -37,7 +37,7 @@ const Button = ({
   className = '',
   ...props
 }: ButtonProps): React.ReactNode => {
-  const base = 'rounded font-mono transition-colors focus:outline-none';
+  const base = 'rounded font-mono transition-all duration-150 focus:outline-none';
   const vStyle = variant === 'ghost'
     ? (variantStyles.ghost as Record<GhostColor, string>)[color]
     : variantStyles[variant] as string;

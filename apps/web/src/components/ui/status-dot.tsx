@@ -17,7 +17,7 @@ const StatusDot = ({ status, size = 'sm' }: StatusDotProps): React.ReactNode => 
     <span className={`relative inline-flex shrink-0 ${sizeClass}`}>
       {shouldAnimate && (
         <span
-          className={`absolute inset-0 rounded-full ${pingSize} ${colorClasses.dotBase} animate-ping opacity-75`}
+          className={`absolute inset-0 rounded-full ${pingSize} ${colorClasses.dotBase} animate-[radar-ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-75`}
         />
       )}
       <span

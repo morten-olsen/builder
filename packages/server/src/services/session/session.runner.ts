@@ -13,7 +13,7 @@ import { SessionEventService } from '../session-event/session-event.js';
 import { EventBusService } from '../../sse/event-bus.js';
 
 import type { SessionRef } from './session.js';
-import { sessionKey, sessionRef, SessionService } from './session.js';
+import { sessionKey, SessionService } from './session.js';
 
 const resolveWorktreePath = async (services: Services, ref: SessionRef, identityId: string): Promise<string> => {
   const authService = services.get(AuthService);

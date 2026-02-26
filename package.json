@@ -9,7 +9,8 @@
     "build": "turbo build",
     "build:dev": "tsc --build --watch",
     "test:unit": "vitest --run --coverage --passWithNoTests",
-    "test": "pnpm run \"/^test:.+/\""
+    "test": "pnpm run \"/^test:.+/\"",
+    "cli": "pnpm --filter @morten-olsen/builder-cli cli"
   },
   "packageManager": "pnpm@10.6.0",
   "workspaces": [

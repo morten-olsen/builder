@@ -22,7 +22,7 @@ const Card = ({
 }: CardProps): React.ReactNode => {
   const base = 'rounded-lg border border-border-base bg-surface-1';
   const hover = interactive
-    ? 'transition-colors hover:border-border-bright hover:bg-surface-2'
+    ? 'transition-all duration-200 hover:border-accent/20 hover:bg-surface-2 hover:shadow-[0_0_8px_rgba(0,229,255,0.06)]'
     : '';
 
   return (

@@ -30,7 +30,7 @@ const SidebarSection = ({
         >
           <path d="M4.5 2l4 4-4 4V2z" />
         </svg>
-        <span className="font-mono text-ui uppercase tracking-wider text-text-muted">
+        <span className="font-condensed font-semibold text-ui uppercase tracking-wider text-text-muted">
           {title}
         </span>
         {count > 0 && (

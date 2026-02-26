@@ -20,14 +20,14 @@ const statusColors: Record<string, StatusColor> = {
     badge: 'border-accent/20 bg-accent-subtle text-accent-dim',
   },
   waiting_for_input: {
-    dot: 'bg-info',
-    dotBase: 'bg-info',
-    badge: 'border-info/30 bg-info/5 text-info',
+    dot: 'bg-warning',
+    dotBase: 'bg-warning',
+    badge: 'border-warning/30 bg-warning/5 text-warning',
   },
   idle: {
-    dot: 'bg-info',
-    dotBase: 'bg-info',
-    badge: 'border-accent/20 bg-accent-subtle text-accent-dim',
+    dot: 'bg-text-muted',
+    dotBase: 'bg-text-muted',
+    badge: 'border-border-base bg-surface-2 text-text-muted',
   },
   reverted: {
     dot: 'bg-info',

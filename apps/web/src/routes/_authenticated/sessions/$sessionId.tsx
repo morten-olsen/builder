@@ -9,7 +9,7 @@ import { Badge } from '../../../components/ui/badge.js';
 import { Button } from '../../../components/ui/button.js';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog.js';
 
-type StatusBadgeColor = 'accent' | 'success' | 'danger' | 'info' | 'neutral';
+type StatusBadgeColor = 'accent' | 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 
 const statusToBadgeColor = (status: string): StatusBadgeColor => {
   switch (status) {
@@ -23,7 +23,7 @@ const statusToBadgeColor = (status: string): StatusBadgeColor => {
     case 'failed':
       return 'danger';
     case 'waiting_for_input':
-      return 'info';
+      return 'warning';
     default:
       return 'neutral';
   }
@@ -172,10 +172,19 @@ const SessionLayout = (): React.ReactNode => {
 
   return (
     <div className="relative flex h-full flex-col">
-      {/* Activity indicator bar */}
+      {/* ECG heartbeat indicator */}
       {isRunning && (
-        <div className="absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden bg-accent/20">
-          <div className="h-full w-1/3 animate-[shimmer_1.5s_ease-in-out_infinite] bg-accent" />
+        <div className="absolute inset-x-0 top-0 z-10 h-1.5 overflow-hidden">
+          <svg className="h-full w-full" viewBox="0 0 200 8" preserveAspectRatio="none">
+            <path
+              d="M0,4 L40,4 L45,1 L50,7 L55,2 L60,5 L65,4 L200,4"
+              fill="none"
+              stroke="var(--color-accent)"
+              strokeWidth="1.5"
+              strokeDasharray="200"
+              style={{ animation: 'ecg-trace 2s linear infinite' }}
+            />
+          </svg>
         </div>
       )}
       <div className="shrink-0 border-b border-border-base bg-surface-1 px-3 py-2 lg:px-5">
@@ -231,7 +240,7 @@ const SessionLayout = (): React.ReactNode => {
                 className={`border-b-2 px-3 py-1.5 font-mono text-ui transition-colors ${
                   isActive
                     ? 'border-accent text-accent'
-                    : 'border-transparent text-text-muted hover:text-text-dim'
+                    : 'border-transparent text-text-muted hover:text-accent/60'
                 }`}
               >
                 {tab.label}

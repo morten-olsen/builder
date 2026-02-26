@@ -47,7 +47,7 @@ const Select = ({
       items={items}
     >
       <BaseSelect.Trigger
-        className={`flex w-full items-center justify-between rounded border border-border-base bg-surface-2 font-mono text-text-bright transition-colors focus:border-accent-dim focus:outline-none disabled:opacity-40 data-[popup-open]:border-accent-dim ${sizeStyles[selectSize]}`}
+        className={`flex w-full items-center justify-between rounded border border-border-base bg-surface-2 font-mono text-text-bright transition-all focus:border-accent/50 focus:shadow-[0_0_8px_rgba(0,229,255,0.12)] focus:outline-none disabled:opacity-40 data-[popup-open]:border-accent/50 ${sizeStyles[selectSize]}`}
       >
         <BaseSelect.Value
           className="min-w-0 truncate"

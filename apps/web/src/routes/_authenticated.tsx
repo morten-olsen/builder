@@ -1,10 +1,23 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 
 import { EventStreamProvider } from '../contexts/event-stream.js';
 import { useMediaQuery } from '../hooks/use-media-query.js';
 import { Sidebar } from '../components/layout/sidebar.js';
 import { MobileDrawer } from '../components/layout/mobile-drawer.js';
+
+const LiveClock = (): React.ReactNode => {
+  const [time, setTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const utc = time.toISOString().slice(11, 19);
+
+  return <span>{utc} UTC</span>;
+};
 
 const AuthenticatedLayout = (): React.ReactNode => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -16,10 +29,22 @@ const AuthenticatedLayout = (): React.ReactNode => {
     <EventStreamProvider>
       <div className="min-h-screen bg-surface-0">
         {isDesktop ? (
-          /* Desktop sidebar */
-          <aside className="fixed inset-y-0 left-0 z-30 w-64 border-r border-border-base">
-            <Sidebar />
-          </aside>
+          <>
+            {/* Status bar */}
+            <div className="fixed inset-x-0 top-0 z-40 flex h-6 items-center justify-between border-b border-border-dim bg-surface-1/80 px-4 backdrop-blur-sm">
+              <span className="font-condensed text-ui font-semibold uppercase tracking-widest text-accent/70">
+                Mission Control
+              </span>
+              <span className="font-mono text-ui text-text-muted">
+                <LiveClock />
+              </span>
+            </div>
+
+            {/* Desktop sidebar */}
+            <aside className="fixed inset-y-0 left-0 z-30 w-64 border-r border-border-base pt-6">
+              <Sidebar />
+            </aside>
+          </>
         ) : (
           <>
             {/* Mobile top bar */}
@@ -36,10 +61,13 @@ const AuthenticatedLayout = (): React.ReactNode => {
                   />
                 </svg>
               </button>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-accent" />
-                <span className="font-mono text-sm font-medium tracking-wide text-text-bright">
-                  builder
+              <div className="flex items-center gap-2.5">
+                <div className="relative flex h-5 w-5 items-center justify-center">
+                  <div className="absolute inset-0 rotate-45 rounded-sm border border-accent/50" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                </div>
+                <span className="font-condensed text-sm font-semibold uppercase tracking-widest text-text-bright">
+                  Builder
                 </span>
               </div>
             </header>
@@ -52,7 +80,7 @@ const AuthenticatedLayout = (): React.ReactNode => {
         )}
 
         {/* Main content */}
-        <main className={isDesktop ? 'ml-64 h-screen overflow-auto' : 'h-[calc(100dvh-3rem)] overflow-auto'}>
+        <main className={isDesktop ? 'fixed top-6 bottom-0 left-64 right-0 overflow-auto' : 'h-[calc(100dvh-3rem)] overflow-auto'}>
           <Outlet />
         </main>
       </div>

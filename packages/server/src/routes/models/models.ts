@@ -2,9 +2,9 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
 import type { AuthTokenPayload } from '../../services/auth/auth.js';
+import { errorResponseSchema } from '../sessions/sessions.schemas.js';
 
 import { modelListResponseSchema } from './models.schemas.js';
-import { errorResponseSchema } from '../sessions/sessions.schemas.js';
 
 const requireUser = (user: AuthTokenPayload | null, reply: FastifyReply): AuthTokenPayload => {
   if (!user) {

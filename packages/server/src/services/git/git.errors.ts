@@ -1,6 +1,8 @@
-class GitError extends Error {
-  constructor(message: string) {
-    super(message);
+import { AppError } from '../../errors/errors.js';
+
+class GitError extends AppError {
+  constructor(message: string, statusCode = 502) {
+    super(statusCode, message);
     this.name = 'GitError';
   }
 }

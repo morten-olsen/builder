@@ -1,13 +1,15 @@
-class AuthError extends Error {
-  constructor(message: string) {
-    super(message);
+import { AppError } from '../../errors/errors.js';
+
+class AuthError extends AppError {
+  constructor(message: string, statusCode = 409) {
+    super(statusCode, message);
     this.name = 'AuthError';
   }
 }
 
 class InvalidCredentialsError extends AuthError {
   constructor() {
-    super('Invalid id or password');
+    super('Invalid id or password', 401);
     this.name = 'InvalidCredentialsError';
   }
 }
@@ -21,14 +23,14 @@ class UserAlreadyExistsError extends AuthError {
 
 class InvalidTokenError extends AuthError {
   constructor() {
-    super('Invalid or expired token');
+    super('Invalid or expired token', 401);
     this.name = 'InvalidTokenError';
   }
 }
 
 class UserNotFoundError extends AuthError {
   constructor() {
-    super('User not found');
+    super('User not found', 404);
     this.name = 'UserNotFoundError';
   }
 }

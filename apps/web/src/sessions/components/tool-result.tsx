@@ -18,7 +18,7 @@ const ToolResult = ({ toolName, output }: ToolResultProps): React.ReactNode => {
         <span className="ml-1">output</span>
       </summary>
       <div
-        className={`mt-1 max-h-64 overflow-y-auto rounded px-3 py-2 ${isBash ? 'bg-[#0d1117]' : 'bg-surface-2'}`}
+        className={`mt-1 max-h-64 overflow-y-auto rounded px-3 py-2 ${isBash ? 'bg-[#080c12]' : 'bg-surface-2'}`}
       >
         <pre
           className={`whitespace-pre-wrap font-mono text-ui leading-relaxed ${isBash ? 'text-text-dim' : 'text-text-muted'}`}

@@ -1,6 +1,8 @@
-class AgentError extends Error {
-  constructor(message: string) {
-    super(message);
+import { AppError } from '../../errors/errors.js';
+
+class AgentError extends AppError {
+  constructor(message: string, statusCode = 500) {
+    super(statusCode, message);
     this.name = 'AgentError';
   }
 }

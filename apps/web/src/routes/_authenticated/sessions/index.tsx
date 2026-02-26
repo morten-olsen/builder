@@ -16,7 +16,7 @@ const SessionsPage = (): React.ReactNode => {
   return (
     <div className="p-3 lg:p-5">
       <div className="mb-4">
-        <h1 className="font-mono text-lg font-medium text-text-bright">Sessions</h1>
+        <h1 className="font-condensed text-lg font-semibold uppercase tracking-wider text-text-bright">Sessions</h1>
         <p className="mt-1 font-mono text-xs text-text-muted">all coding agent sessions</p>
       </div>
 

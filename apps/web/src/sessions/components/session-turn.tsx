@@ -67,7 +67,7 @@ const SessionTurn = ({ turn, onRevert, isReverting }: SessionTurnProps): React.R
           </button>
 
           {expanded && (
-            <div className="mt-1 space-y-1 border-l border-border-dim pl-3">
+            <div className="mt-1 space-y-1 border-l border-accent/15 pl-3">
               {collapsibleEvents.map((event) => (
                 <SessionEventItem key={event.id} event={event} />
               ))}

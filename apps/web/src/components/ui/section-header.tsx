@@ -17,7 +17,7 @@ const SectionHeader = ({
   className = '',
 }: SectionHeaderProps): React.ReactNode => (
   <h2
-    className={`font-mono font-medium uppercase tracking-wider text-text-dim ${sizeStyles[size]} ${className}`}
+    className={`font-condensed font-semibold uppercase tracking-wider text-text-dim ${sizeStyles[size]} ${className}`}
   >
     {children}
   </h2>

@@ -14,7 +14,7 @@ const SettingsLayout = (): React.ReactNode => {
   return (
     <div className="p-3 lg:p-5">
       <div className="mb-4">
-        <h1 className="font-mono text-lg font-medium text-text-bright">Settings</h1>
+        <h1 className="font-condensed text-lg font-semibold uppercase tracking-wider text-text-bright">Settings</h1>
         <div className="mt-2 flex gap-0 border-b border-border-base">
           {tabs.map((tab) => {
             const isActive = currentPath.includes(tab.to);

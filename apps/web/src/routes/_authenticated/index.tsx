@@ -35,8 +35,10 @@ const HomePage = (): React.ReactNode => {
             <section className="mb-4">
               <SectionHeader className="mb-2">Needs Attention</SectionHeader>
               <div className="space-y-1.5">
-                {groups.attention.map((s) => (
-                  <SessionCard key={s.id} session={s} action="Respond" />
+                {groups.attention.map((s, i) => (
+                  <div key={s.id} style={{ animation: `stagger-in 0.3s ease-out ${i * 0.06}s both` }}>
+                    <SessionCard session={s} action="Respond" />
+                  </div>
                 ))}
               </div>
             </section>
@@ -46,8 +48,10 @@ const HomePage = (): React.ReactNode => {
             <section className="mb-4">
               <SectionHeader className="mb-2">Running</SectionHeader>
               <div className="space-y-1.5">
-                {[...groups.running, ...groups.pending].map((s) => (
-                  <SessionCard key={s.id} session={s} action="View" />
+                {[...groups.running, ...groups.pending].map((s, i) => (
+                  <div key={s.id} style={{ animation: `stagger-in 0.3s ease-out ${i * 0.06}s both` }}>
+                    <SessionCard session={s} action="View" />
+                  </div>
                 ))}
               </div>
             </section>
@@ -57,8 +61,10 @@ const HomePage = (): React.ReactNode => {
             <section>
               <SectionHeader className="mb-2">Recent</SectionHeader>
               <div className="space-y-1.5">
-                {groups.recent.map((s) => (
-                  <SessionCard key={s.id} session={s} action="View" />
+                {groups.recent.map((s, i) => (
+                  <div key={s.id} style={{ animation: `stagger-in 0.3s ease-out ${i * 0.06}s both` }}>
+                    <SessionCard session={s} action="View" />
+                  </div>
                 ))}
               </div>
             </section>

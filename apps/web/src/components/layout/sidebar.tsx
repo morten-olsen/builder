@@ -74,11 +74,14 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
 
   return (
     <div className="flex h-full flex-col bg-surface-1">
-      {/* Logo */}
-      <div className="flex h-10 items-center gap-2 border-b border-border-base px-4">
-        <div className="h-2 w-2 rounded-full bg-accent" />
-        <span className="font-mono text-sm font-medium tracking-wide text-text-bright">
-          builder
+      {/* Mission Patch */}
+      <div className="flex h-10 items-center gap-2.5 border-b border-border-base px-4">
+        <div className="relative flex h-5 w-5 items-center justify-center">
+          <div className="absolute inset-0 rotate-45 rounded-sm border border-accent/50" />
+          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+        </div>
+        <span className="font-condensed text-sm font-semibold uppercase tracking-widest text-text-bright">
+          Builder
         </span>
       </div>
 
@@ -87,7 +90,7 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
         <Link
           to="/new"
           onClick={onNavigate}
-          className="flex w-full items-center justify-center gap-1.5 rounded border border-accent/30 bg-accent-subtle px-2.5 py-1.5 font-mono text-xs text-accent transition-colors hover:border-accent/50 hover:bg-accent-muted"
+          className="flex w-full items-center justify-center gap-1.5 rounded border border-accent/30 bg-accent-subtle px-2.5 py-1.5 font-mono text-xs text-accent transition-all hover:border-accent/50 hover:bg-accent-muted hover:shadow-[0_0_12px_rgba(0,229,255,0.15)]"
         >
           + New Session
         </Link>
@@ -99,7 +102,7 @@ const Sidebar = ({ onNavigate }: SidebarProps): React.ReactNode => {
           <select
             value={filterRepoId}
             onChange={(e) => setFilterRepoId(e.target.value)}
-            className="w-full rounded border border-border-base bg-surface-2 px-2 py-1 font-mono text-ui text-text-dim outline-none transition-colors focus:border-accent"
+            className="w-full rounded border border-border-base bg-surface-2 px-2 py-1 font-mono text-ui text-text-dim outline-none transition-all focus:border-accent/50 focus:shadow-[0_0_8px_rgba(0,229,255,0.12)]"
           >
             <option value="">All repos</option>
             {repos.data.map((r) => (
